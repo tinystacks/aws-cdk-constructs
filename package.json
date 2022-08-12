@@ -20,7 +20,7 @@
     "prerelease": "npm version prerelease --preid=local --no-git-tag-version",
     "publish-local": "npm run prerelease; bash ./localNpmLogin.sh; npm publish --@tinystacks:registry=http://local-npm-registry:4873",
     "qa": "npm run lint",
-    "test": "echo \"no tests to be run\"",
+    "test": "QUIET=true jest --detectOpenHandles",
     "test-cov": "jest --coverage",
     "view-test-cov": "jest --coverage && open ./coverage/lcov-report/index.html"
   },
@@ -53,6 +53,7 @@
   "dependencies": {
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
+    "prando": "^6.0.1",
     "source-map-support": "^0.5.21"
   }
 }
