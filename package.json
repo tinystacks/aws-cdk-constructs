@@ -8,10 +8,13 @@
     "cleanup": "rm -rf dist || true && rm *.tgz || true",
     "clean-build": "npm ci && npm run cleanup && npm run build",
     "dependency-check": "./node_modules/.bin/depcheck",
+    "install-local-utils": "npm i @tinystacks/utils@local --@tinystacks:registry=http://local-npm-registry:4873",
+    "install-local-packages": "npm run install-local-utils",
+    "install-remote-utils": "npm i @tinystacks/utils@latest --@tinystacks:registry=https://npm.pkg.github.com",
+    "install-remote-packages": "npm uninstall @tinystacks/utils; npm run install-remote-utils",
     "lint": "./node_modules/.bin/eslint --ext .ts,.js ./",
     "lint-fix": "./node_modules/.bin/eslint --ext .ts,.js --fix ./",
     "lint-no-warn": "./node_modules/.bin/eslint --ext .ts,.js --quiet ./",
-    "install-remote-packages": "echo \"no private packages to install\"",
     "major": "npm version major --no-git-tag-version",
     "minor": "npm version minor --no-git-tag-version",
     "patch": "npm version patch --no-git-tag-version",
@@ -20,9 +23,7 @@
     "prerelease": "npm version prerelease --preid=local --no-git-tag-version",
     "publish-local": "npm run prerelease; bash ./localNpmLogin.sh; npm publish --@tinystacks:registry=http://local-npm-registry:4873",
     "qa": "npm run lint",
-    "test": "QUIET=true jest --detectOpenHandles",
-    "test-cov": "jest --coverage",
-    "view-test-cov": "jest --coverage && open ./coverage/lcov-report/index.html"
+    "test": "echo \"No tests to run yet...\""
   },
   "repository": {
     "type": "git",
@@ -51,6 +52,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@tinystacks/utils": "^0.0.1-local.1",
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
     "prando": "^6.0.1",

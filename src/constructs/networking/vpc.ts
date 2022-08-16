@@ -1,3 +1,4 @@
+import { constructId } from '@tinystacks/utils';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 
@@ -9,11 +10,11 @@ export interface EcsVpcProps {
 }
 
 export class VPC extends Construct {
-  private vpc: ec2.IVpc;
+  private readonly _vpc: ec2.IVpc;
   private subnetConfiguration: { cidrMask: number; name: string; subnetType: ec2.SubnetType; }[];
     
   constructor (scope: Construct, id: string, props: EcsVpcProps) {
-    super(scope, `${id}-vpc`);
+    super(scope, constructId('vpc', 'construct', id));
         
     const {
       cidrBlock
@@ -22,7 +23,7 @@ export class VPC extends Construct {
     const privateSubnet = [
       {
         cidrMask: 26,
-        name: 'privateSubnet',
+        name: 'PrivateSubnet',
         subnetType: ec2.SubnetType.PRIVATE_WITH_NAT
       }
     ];
@@ -30,7 +31,7 @@ export class VPC extends Construct {
     const publicSubnet = [
       {
         cidrMask: 26,
-        name: 'publicSubnet',
+        name: 'PublicSubnet',
         subnetType: ec2.SubnetType.PUBLIC
       }
     ];
@@ -38,14 +39,14 @@ export class VPC extends Construct {
     this.subnetConfiguration = privateSubnet;
     this.subnetConfiguration.push(publicSubnet[0]);
 
-    this.vpc = new ec2.Vpc(this, `${id}-k8-vpc`, {
+    this._vpc = new ec2.Vpc(this, constructId('vpc'), {
       cidr: cidrBlock,
       subnetConfiguration: this.subnetConfiguration
     });
   }
 
-  getVpc (): ec2.IVpc {
-    return this.vpc;
+  public get vpc (): ec2.IVpc {
+    return this._vpc;
   }
 
 }

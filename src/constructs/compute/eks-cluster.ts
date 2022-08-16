@@ -3,6 +3,7 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
+import { constructId } from '@tinystacks/utils';
 
 
 interface EksProps {
@@ -17,7 +18,7 @@ export class EKS extends Construct {
   _internetAccess: boolean;
 
   constructor (scope: Construct, id: string, props: EksProps) {
-    super(scope, `${id}-eks`);
+    super(scope, constructId('eks', 'construct', id));
     this.id = id;
     this._vpc = props.vpc;
     this._internetAccess = props.internetAccess;
@@ -35,12 +36,12 @@ export class EKS extends Construct {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
     }
 
-    const cluster = new eks.Cluster(this, `${this.id}-eks-cluster`, {
+    const cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
       version: eks.KubernetesVersion.V1_21,
       vpc: this._vpc,
       defaultCapacity: 0
     });
-    cluster.addAutoScalingGroupCapacity(`${this.id}-eks-nodes`, {
+    cluster.addAutoScalingGroupCapacity(constructId('eks', 'nodes'), {
       instanceType: new ec2.InstanceType('t2.medium'),
       minCapacity: 3,
       vpcSubnets: {
@@ -52,7 +53,7 @@ export class EKS extends Construct {
 
   private configureLoadBalancerController () {
     const loadBalancerServiceAccountName = 'aws-load-balancer-controller';
-    const serviceAccount = this._cluster.addServiceAccount(`${this.id}-lb-sa`, {
+    const serviceAccount = this._cluster.addServiceAccount(constructId('lb', 'serviceAccount'), {
       name: loadBalancerServiceAccountName,
       namespace: 'default'
     });
@@ -121,7 +122,7 @@ export class EKS extends Construct {
       })
     );
     this._cluster.addHelmChart(
-      `${this.id}-lb-helm`,
+      constructId('lb', 'helm'),
       {
         chart: 'aws-load-balancer-controller',
         repository: 'https://aws.github.io/eks-charts',
