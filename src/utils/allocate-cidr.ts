@@ -53,7 +53,7 @@ function isIPv4 (ip: string): boolean {
   const hasFourOctets = octets.length === 4;
   const eachOctetIs8Bit = octets.reduce<boolean>((acc, octet: string) => {
     const numOctet = Number(octet);
-    const octetIs8Bit = numOctet !== Number.NaN && numOctet >= 0 && numOctet <= 255;
+    const octetIs8Bit = !Number.isNaN(numOctet) && numOctet >= 0 && numOctet <= 255;
     acc = acc && octetIs8Bit;
     return acc;
   }, true);
