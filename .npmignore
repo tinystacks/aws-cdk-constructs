@@ -5,3 +5,5 @@
 .cdk.staging
 cdk.out
 bin
+coverage
+test

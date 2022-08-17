@@ -4,24 +4,32 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
 import { constructId } from '@tinystacks/utils';
+import { CfnOutput } from 'aws-cdk-lib';
+import kebabCase from 'lodash.kebabcase';
 
 
-interface EksProps {
+export interface EksProps {
     vpc: ec2.IVpc
     internetAccess: boolean
 }
 
 export class EKS extends Construct {
   id: string;
-  _cluster: eks.Cluster;
-  _vpc: ec2.IVpc;
-  _internetAccess: boolean;
+  private readonly _cluster: eks.Cluster;
+  private readonly _vpc: ec2.IVpc;
+  private readonly _internetAccess: boolean;
 
   constructor (scope: Construct, id: string, props: EksProps) {
-    super(scope, constructId('eks', 'construct', id));
+    super(scope, id);
+    
+    const {
+      vpc,
+      internetAccess
+    } = props;
+    
     this.id = id;
-    this._vpc = props.vpc;
-    this._internetAccess = props.internetAccess;
+    this._vpc = vpc;
+    this._internetAccess = internetAccess;
     this._cluster = this.createCluster();
 
     this.configureLoadBalancerController();
@@ -30,7 +38,7 @@ export class EKS extends Construct {
 
   private createCluster (): eks.Cluster {
     let nodeSubnetType;
-    if (this._internetAccess) {
+    if (this.internetAccess) {
       nodeSubnetType = ec2.SubnetType.PUBLIC;
     } else {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
@@ -38,22 +46,55 @@ export class EKS extends Construct {
 
     const cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
       version: eks.KubernetesVersion.V1_21,
-      vpc: this._vpc,
+      vpc: this.vpc,
       defaultCapacity: 0
     });
-    cluster.addAutoScalingGroupCapacity(constructId('eks', 'nodes'), {
+    cluster.addAutoScalingGroupCapacity(constructId('eks', 'asg', 'capacity'), {
       instanceType: new ec2.InstanceType('t2.medium'),
       minCapacity: 3,
       vpcSubnets: {
         subnetType: nodeSubnetType
       }
     });
+
+    new CfnOutput(this, constructId('cluster', 'name'), {
+      description: `${this.id}-cluster-name`,
+      value: cluster.clusterName
+    });
+    new CfnOutput(this, constructId('cluster', 'arn'), {
+      description: `${this.id}-cluster-arn`,
+      value: cluster.clusterArn
+    });
+    new CfnOutput(this, constructId('cluster', 'role', 'name'), {
+      description: `${this.id}-cluster-role-name`,
+      value: cluster.role.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'role', 'arn'), {
+      description: `${this.id}-cluster-role-arn`,
+      value: cluster.role.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'name'), {
+      description: `${this.id}-cluster-admin-role-name`,
+      value: cluster.adminRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'arn'), {
+      description: `${this.id}-cluster-admin-role-arn`,
+      value: cluster.adminRole.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'name'), {
+      description: `${this.id}-cluster-kubectl-role-name`,
+      value: cluster.kubectlRole?.roleName || ''
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'arn'), {
+      description: `${this.id}-cluster-kubectl-role-arn`,
+      value: cluster.kubectlRole?.roleArn || ''
+    });
     return cluster;
   }
 
   private configureLoadBalancerController () {
     const loadBalancerServiceAccountName = 'aws-load-balancer-controller';
-    const serviceAccount = this._cluster.addServiceAccount(constructId('lb', 'serviceAccount'), {
+    const serviceAccount = this.cluster.addServiceAccount(constructId('lb', 'serviceAccount'), {
       name: loadBalancerServiceAccountName,
       namespace: 'default'
     });
@@ -121,20 +162,30 @@ export class EKS extends Construct {
         effect: iam.Effect.ALLOW
       })
     );
-    this._cluster.addHelmChart(
+
+    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'name'), {
+      description: `${this.id}-eks-cluster-service-account-role-name`,
+      value: serviceAccount.role.roleName
+    });
+    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'arn'), {
+      description: `${this.id}-eks-cluster-service-account-role-arn`,
+      value: serviceAccount.role.roleArn
+    });
+
+    this.cluster.addHelmChart(
       constructId('lb', 'helm'),
       {
         chart: 'aws-load-balancer-controller',
         repository: 'https://aws.github.io/eks-charts',
         namespace: 'default',
-        release: `${this.id}-lb`,
+        release: kebabCase(`${this.id}-lb`), // was throwing if it contained the TitleCase id.
         version: '1.4.3',
         values: {
           deploymentAnnotations: {
             'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
           },
-          clusterName: this._cluster.clusterName,
-          vpcId: this._vpc.vpcId,
+          clusterName: this.cluster.clusterName,
+          vpcId: this.vpc.vpcId,
           serviceAccount: {
             create: false,
             name: loadBalancerServiceAccountName
@@ -145,12 +196,22 @@ export class EKS extends Construct {
   }
 
   private tagSubnets () {
-    for (const subnet of this._vpc.privateSubnets) {
+    for (const subnet of this.vpc.privateSubnets) {
       const importedSubnet = ec2.Subnet.fromSubnetId(this, `${subnet.subnetId}`, subnet.subnetId);
       cdk.Tags.of(importedSubnet).add(
         'kubernetes.io/role/internal-elb',
         '1'
       );
     }
+  }
+
+  public get cluster (): eks.Cluster {
+    return this._cluster;
+  }
+  public get vpc (): ec2.IVpc {
+    return this._vpc;
+  }
+  public get internetAccess (): boolean {
+    return this._internetAccess;
   }
 }

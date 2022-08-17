@@ -1,8 +1,11 @@
 {
   "name": "@tinystacks/cdk-constructs",
-  "version": "0.0.0",
+  "version": "0.0.1-local.11",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "cleanup": "rm -rf dist || true && rm *.tgz || true",
@@ -19,9 +22,9 @@
     "minor": "npm version minor --no-git-tag-version",
     "patch": "npm version patch --no-git-tag-version",
     "package": "npm pack && cp tinystacks-byo-iac-templates-*.tgz tinystacks-byo-iac-templates-latest.tgz",
-    "prepack": "npm run qa",
+    "prepack": "npm run qa && npm run clean-build",
     "prerelease": "npm version prerelease --preid=local --no-git-tag-version",
-    "publish-local": "npm run prerelease; bash ./localNpmLogin.sh; npm publish --@tinystacks:registry=http://local-npm-registry:4873",
+    "publish-local": "npm run prerelease; bash ./localNpmLogin.sh; npm publish --tag local --@tinystacks:registry=http://local-npm-registry:4873",
     "qa": "npm run lint",
     "test": "echo \"No tests to run yet...\""
   },
@@ -37,6 +40,7 @@
   "homepage": "https://github.com/tinystacks/tinystacks-cdk-constructs#readme",
   "devDependencies": {
     "@types/jest": "^28.1.6",
+    "@types/lodash.kebabcase": "^4.1.7",
     "@types/node": "^18.7.2",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
@@ -55,6 +59,7 @@
     "@tinystacks/utils": "^0.0.1-local.1",
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
+    "lodash.kebabcase": "^4.1.1",
     "prando": "^6.0.1",
     "source-map-support": "^0.5.21"
   }
