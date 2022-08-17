@@ -1,4 +1,4 @@
-import { allocateCidrBlock, constructId } from '@tinystacks/utils';
+import { allocateCidrBlock, allocateSubnetMask, constructId } from '@tinystacks/utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
@@ -11,36 +11,74 @@ export interface EcsVpcProps {
 export class VPC extends Construct {
   private readonly _vpc: ec2.IVpc;
   private subnetConfiguration: { cidrMask: number; name: string; subnetType: ec2.SubnetType; }[];
+  private cidrBlock: string;
+  private cidrBlockMask: number;
+  private subnetMask: number;
     
   constructor (scope: Construct, id: string, props: EcsVpcProps) {
     super(scope, id);
-        
+    
     const {
-      cidrBlock = allocateCidrBlock({ seed: id }).cidrBlock
+      cidrBlock,
+      internetAccess
     } = props;
+    
+    if (cidrBlock) {
+      this.cidrBlock = cidrBlock;
+      this.cidrBlockMask = Number(cidrBlock?.split('/')?.at(1));
+    } else {
+      const autoAllocatedCidrBlock = allocateCidrBlock({ seed: id });
+      this.cidrBlock = autoAllocatedCidrBlock.cidrBlock;
+      this.cidrBlockMask = autoAllocatedCidrBlock.networkMask;
+    }
 
-    const privateSubnetConfig = {
-      cidrMask: 26,
-      name: 'PrivateSubnet',
-      subnetType: ec2.SubnetType.PRIVATE_WITH_NAT
-    };
+    const subnetCount = internetAccess ? 6 : 4;
+    this.subnetMask = allocateSubnetMask(this.cidrBlockMask, subnetCount);
+
+    this.subnetConfiguration = [];
+
+    if (internetAccess) {
+      const privateSubnetConfig = {
+        cidrMask: this.subnetMask,
+        name: 'PrivateSubnet',
+        subnetType: ec2.SubnetType.PRIVATE_WITH_NAT
+      };
+      this.subnetConfiguration.push(privateSubnetConfig);
+    }
 
     const publicSubnetConfig = {
-      cidrMask: 26,
+      cidrMask: this.subnetMask,
       name: 'PublicSubnet',
       subnetType: ec2.SubnetType.PUBLIC
     };
-
-    this.subnetConfiguration = [privateSubnetConfig, publicSubnetConfig];
+    this.subnetConfiguration.push(publicSubnetConfig);
+    
+    const isolatedSubnetConfig = {
+      cidrMask: this.subnetMask,
+      name: 'IsolatedSubnet',
+      subnetType: ec2.SubnetType.PRIVATE_ISOLATED
+    };
+    this.subnetConfiguration.push(isolatedSubnetConfig);
 
     this._vpc = new ec2.Vpc(this, constructId('vpc'), {
-      cidr: cidrBlock,
+      cidr: this.cidrBlock,
       subnetConfiguration: this.subnetConfiguration
     });
 
     new CfnOutput(this, constructId('vpc', 'id'), {
       description: `${id}-vpc-id`,
       value: this.vpc.vpcId
+    });
+
+    this.vpc.privateSubnets?.forEach((privateSubnet, index) => {
+      new CfnOutput(this, constructId('privateSubnet', (index + 1).toString(), 'id'), {
+        description: `private-subnet-${index + 1}-id`,
+        value: privateSubnet.subnetId
+      });
+      new CfnOutput(this, constructId('privateSubnet', (index + 1).toString(), 'az'), {
+        description: `private-subnet-${index + 1}-az`,
+        value: privateSubnet.availabilityZone
+      });
     });
   }
 

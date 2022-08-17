@@ -44,11 +44,33 @@ export class EKS extends Construct {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
     }
 
+    const mastersRole = new iam.Role(this, constructId('masters', 'role'), {
+      assumedBy: new iam.AccountPrincipal(cdk.Stack.of(this).account)
+    });
+
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'name'), {
+      description: `${this.id}-cluster-masters-role-name`,
+      value: mastersRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'arn'), {
+      description: `${this.id}-cluster-masters-role-arn`,
+      value: mastersRole.roleArn
+    });
+
     const cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
       version: eks.KubernetesVersion.V1_21,
       vpc: this.vpc,
-      defaultCapacity: 0
+      defaultCapacity: 0,
+      mastersRole
     });
+    mastersRole.attachInlinePolicy(new iam.Policy(this, constructId('kubectl', 'policy'), {
+      statements: [
+        new iam.PolicyStatement({
+          actions: ['kubectl:*'],
+          resources: [cluster.clusterArn]
+        })
+      ]
+    }));
     cluster.addAutoScalingGroupCapacity(constructId('eks', 'asg', 'capacity'), {
       instanceType: new ec2.InstanceType('t2.medium'),
       minCapacity: 3,
