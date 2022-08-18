@@ -39,9 +39,9 @@ export class EKS extends Construct {
   private createCluster (): eks.Cluster {
     let nodeSubnetType;
     if (this.internetAccess) {
-      nodeSubnetType = ec2.SubnetType.PUBLIC;
-    } else {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
+    } else {
+      nodeSubnetType = ec2.SubnetType.PUBLIC;
     }
 
     const mastersRole = new iam.Role(this, constructId('masters', 'role'), {

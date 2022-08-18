@@ -32,8 +32,7 @@ export class VPC extends Construct {
       this.cidrBlockMask = autoAllocatedCidrBlock.networkMask;
     }
 
-    const subnetCount = internetAccess ? 6 : 4;
-    this.subnetMask = allocateSubnetMask(this.cidrBlockMask, subnetCount);
+    this.subnetMask = allocateSubnetMask(this.cidrBlockMask, 6); // We always use 6 in case "internetAccess" changes so that there's still space
 
     this.subnetConfiguration = [];
 
