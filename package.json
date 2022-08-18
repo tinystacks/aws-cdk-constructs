@@ -1,6 +1,6 @@
 {
   "name": "@tinystacks/cdk-constructs",
-  "version": "0.0.1-local.11",
+  "version": "0.0.1-local.23",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
   "main": "dist/index.js",
   "files": [
@@ -56,7 +56,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@tinystacks/utils": "^0.0.1-local.1",
+    "@tinystacks/utils": "^0.0.1-local.3",
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
     "lodash.kebabcase": "^4.1.1",
