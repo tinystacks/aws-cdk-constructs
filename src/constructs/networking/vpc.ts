@@ -1,5 +1,5 @@
 import { allocateCidrBlock, allocateSubnetMask, constructId } from '@tinystacks/utils';
-import { CfnOutput } from 'aws-cdk-lib';
+import { CfnOutput, Stack } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 
@@ -32,7 +32,10 @@ export class VPC extends Construct {
       this.cidrBlockMask = autoAllocatedCidrBlock.networkMask;
     }
 
-    this.subnetMask = allocateSubnetMask(this.cidrBlockMask, 6); // We always use 6 in case "internetAccess" changes so that there's still space
+    const stackAzs = Stack.of(this).availabilityZones;
+    const azCount = stackAzs.length;
+    const maxSubnetCount = azCount * 3; // Allow 1 subnet type in each availability zone
+    this.subnetMask = allocateSubnetMask(this.cidrBlockMask, maxSubnetCount);
 
     this.subnetConfiguration = [];
 
