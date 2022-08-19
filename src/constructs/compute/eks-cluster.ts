@@ -6,37 +6,66 @@ import * as cdk from 'aws-cdk-lib';
 import { constructId } from '@tinystacks/utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import kebabCase from 'lodash.kebabcase';
+import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 
 
 export interface EksProps {
-    vpc: ec2.IVpc
-    internetAccess: boolean
+    vpc: ec2.IVpc;
+    internetAccess: boolean;
+    defaultCapacity?: number;
+    minimumCapacity?: number;
+    maximumCapacity?: number;
+    instanceClass?: InstanceClass;
+    instanceSize?: InstanceSize;
 }
 
 export class EKS extends Construct {
   id: string;
-  private readonly _cluster: eks.Cluster;
   private readonly _vpc: ec2.IVpc;
   private readonly _internetAccess: boolean;
+  private readonly _defaultCapacity: number;
+  private readonly _minimumCapacity: number | undefined;
+  private readonly _maximumCapacity: number | undefined;
+  private readonly _instanceType: InstanceType;
+  private readonly _cluster: eks.Cluster;
+  private readonly _mastersRole: iam.Role;
+  private readonly _serviceAccount: eks.ServiceAccount;
 
   constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
     
     const {
       vpc,
-      internetAccess
+      internetAccess,
+      defaultCapacity = 0,
+      minimumCapacity,
+      maximumCapacity,
+      instanceClass = InstanceClass.BURSTABLE3,
+      instanceSize = InstanceSize.MEDIUM
     } = props;
     
     this.id = id;
     this._vpc = vpc;
     this._internetAccess = internetAccess;
-    this._cluster = this.createCluster();
-
-    this.configureLoadBalancerController();
+    this._defaultCapacity = defaultCapacity;
+    this._minimumCapacity = minimumCapacity;
+    this._maximumCapacity = maximumCapacity;
+    this._instanceType = InstanceType.of(instanceClass, instanceSize);
+    const {
+      cluster,
+      mastersRole
+    } = this.createCluster();
+    this._cluster = cluster;
+    this._mastersRole = mastersRole;
+    this._serviceAccount = this.configureLoadBalancerController();
     this.tagSubnets();
+    this.createOutputs();
   }
 
-  private createCluster (): eks.Cluster {
+  private createCluster (): {
+    cluster: eks.Cluster;
+    mastersRole: iam.Role
+    } {
     let nodeSubnetType;
     if (this.internetAccess) {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
@@ -46,15 +75,6 @@ export class EKS extends Construct {
 
     const mastersRole = new iam.Role(this, constructId('masters', 'role'), {
       assumedBy: new iam.AccountPrincipal(cdk.Stack.of(this).account)
-    });
-
-    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'name'), {
-      description: `${this.id}-cluster-masters-role-name`,
-      value: mastersRole.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'arn'), {
-      description: `${this.id}-cluster-masters-role-arn`,
-      value: mastersRole.roleArn
     });
 
     const cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
@@ -72,49 +92,18 @@ export class EKS extends Construct {
       ]
     }));
     cluster.addAutoScalingGroupCapacity(constructId('eks', 'asg', 'capacity'), {
-      instanceType: new ec2.InstanceType('t2.medium'),
-      minCapacity: 3,
+      instanceType: this.instanceType,
+      minCapacity: this.minimumCapacity,
+      maxCapacity: this.maximumCapacity,
       vpcSubnets: {
         subnetType: nodeSubnetType
       }
     });
 
-    new CfnOutput(this, constructId('cluster', 'name'), {
-      description: `${this.id}-cluster-name`,
-      value: cluster.clusterName
-    });
-    new CfnOutput(this, constructId('cluster', 'arn'), {
-      description: `${this.id}-cluster-arn`,
-      value: cluster.clusterArn
-    });
-    new CfnOutput(this, constructId('cluster', 'role', 'name'), {
-      description: `${this.id}-cluster-role-name`,
-      value: cluster.role.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'role', 'arn'), {
-      description: `${this.id}-cluster-role-arn`,
-      value: cluster.role.roleArn
-    });
-    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'name'), {
-      description: `${this.id}-cluster-admin-role-name`,
-      value: cluster.adminRole.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'arn'), {
-      description: `${this.id}-cluster-admin-role-arn`,
-      value: cluster.adminRole.roleArn
-    });
-    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'name'), {
-      description: `${this.id}-cluster-kubectl-role-name`,
-      value: cluster.kubectlRole?.roleName || ''
-    });
-    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'arn'), {
-      description: `${this.id}-cluster-kubectl-role-arn`,
-      value: cluster.kubectlRole?.roleArn || ''
-    });
-    return cluster;
+    return { cluster, mastersRole };
   }
 
-  private configureLoadBalancerController () {
+  private configureLoadBalancerController (): eks.ServiceAccount {
     const loadBalancerServiceAccountName = 'aws-load-balancer-controller';
     const serviceAccount = this.cluster.addServiceAccount(constructId('lb', 'serviceAccount'), {
       name: loadBalancerServiceAccountName,
@@ -185,15 +174,6 @@ export class EKS extends Construct {
       })
     );
 
-    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'name'), {
-      description: `${this.id}-eks-cluster-service-account-role-name`,
-      value: serviceAccount.role.roleName
-    });
-    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'arn'), {
-      description: `${this.id}-eks-cluster-service-account-role-arn`,
-      value: serviceAccount.role.roleArn
-    });
-
     this.cluster.addHelmChart(
       constructId('lb', 'helm'),
       {
@@ -215,6 +195,8 @@ export class EKS extends Construct {
         }
       }
     );
+    
+    return serviceAccount;
   }
 
   private tagSubnets () {
@@ -227,13 +209,82 @@ export class EKS extends Construct {
     }
   }
 
+  private createOutputs () {
+    new CfnOutput(this, constructId('cluster', 'name'), {
+      description: `${this.id}-cluster-name`,
+      value: this.cluster.clusterName
+    });
+    new CfnOutput(this, constructId('cluster', 'arn'), {
+      description: `${this.id}-cluster-arn`,
+      value: this.cluster.clusterArn
+    });
+    new CfnOutput(this, constructId('cluster', 'role', 'name'), {
+      description: `${this.id}-cluster-role-name`,
+      value: this.cluster.role.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'role', 'arn'), {
+      description: `${this.id}-cluster-role-arn`,
+      value: this.cluster.role.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'name'), {
+      description: `${this.id}-cluster-admin-role-name`,
+      value: this.cluster.adminRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'arn'), {
+      description: `${this.id}-cluster-admin-role-arn`,
+      value: this.cluster.adminRole.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'name'), {
+      description: `${this.id}-cluster-kubectl-role-name`,
+      value: this.cluster.kubectlRole?.roleName || ''
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'arn'), {
+      description: `${this.id}-cluster-kubectl-role-arn`,
+      value: this.cluster.kubectlRole?.roleArn || ''
+    });
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'name'), {
+      description: `${this.id}-cluster-masters-role-name`,
+      value: this.mastersRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'arn'), {
+      description: `${this.id}-cluster-masters-role-arn`,
+      value: this.mastersRole.roleArn
+    });
+    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'name'), {
+      description: `${this.id}-eks-cluster-service-account-role-name`,
+      value: this.serviceAccount.role.roleName
+    });
+    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'arn'), {
+      description: `${this.id}-eks-cluster-service-account-role-arn`,
+      value: this.serviceAccount.role.roleArn
+    });
+  }
+
   public get cluster (): eks.Cluster {
     return this._cluster;
+  }
+  public get mastersRole (): iam.Role {
+    return this._mastersRole;
   }
   public get vpc (): ec2.IVpc {
     return this._vpc;
   }
   public get internetAccess (): boolean {
     return this._internetAccess;
+  }
+  public get defaultCapacity (): number {
+    return this._defaultCapacity;
+  }
+  public get minimumCapacity (): number | undefined {
+    return this._minimumCapacity;
+  }
+  public get maximumCapacity (): number | undefined {
+    return this._maximumCapacity;
+  }
+  public get instanceType (): InstanceType {
+    return this._instanceType;
+  }
+  public get serviceAccount (): eks.ServiceAccount {
+    return this._serviceAccount;
   }
 }
