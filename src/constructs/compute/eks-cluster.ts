@@ -17,6 +17,7 @@ export interface EksProps {
     maximumCapacity?: number;
     instanceClass?: InstanceClass;
     instanceSize?: InstanceSize;
+    clusterName?: string;
 }
 
 export class EKS extends Construct {
@@ -30,6 +31,7 @@ export class EKS extends Construct {
   private readonly _cluster: eks.Cluster;
   private readonly _mastersRole: iam.Role;
   private readonly _serviceAccount: eks.ServiceAccount;
+  private readonly _clusterName: string | undefined;
 
   constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
@@ -41,7 +43,8 @@ export class EKS extends Construct {
       minimumCapacity,
       maximumCapacity,
       instanceClass = InstanceClass.BURSTABLE3,
-      instanceSize = InstanceSize.MEDIUM
+      instanceSize = InstanceSize.MEDIUM,
+      clusterName
     } = props;
     
     this.id = id;
@@ -51,6 +54,7 @@ export class EKS extends Construct {
     this._minimumCapacity = minimumCapacity;
     this._maximumCapacity = maximumCapacity;
     this._instanceType = InstanceType.of(instanceClass, instanceSize);
+    this._clusterName = clusterName;
     const {
       cluster,
       mastersRole
@@ -78,6 +82,7 @@ export class EKS extends Construct {
     });
 
     const cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
+      clusterName: this.clusterName,
       version: eks.KubernetesVersion.V1_21,
       vpc: this.vpc,
       defaultCapacity: 0,
@@ -286,5 +291,8 @@ export class EKS extends Construct {
   }
   public get serviceAccount (): eks.ServiceAccount {
     return this._serviceAccount;
+  }
+  public get clusterName (): string | undefined {
+    return this._clusterName;
   }
 }
