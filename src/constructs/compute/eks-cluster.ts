@@ -173,7 +173,11 @@ export class EKS extends Construct {
           'elasticloadbalancing:ModifyListener',
           'elasticloadbalancing:AddListenerCertificates',
           'elasticloadbalancing:RemoveListenerCertificates',
-          'elasticloadbalancing:ModifyRule'
+          'elasticloadbalancing:ModifyRule',
+          'elasticloadbalancing:DeleteTargetGroup',
+          'elasticloadbalancing:DeregisterTargets',
+          'elasticloadbalancing:ModifyTargetGroupAttributes',
+          'elasticloadbalancing:RegisterTargets'
         ],
         effect: iam.Effect.ALLOW
       })
