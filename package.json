@@ -1,6 +1,6 @@
 {
   "name": "@tinystacks/aws-cdk-constructs",
-  "version": "0.0.1-local.26",
+  "version": "0.0.1-local.29",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
   "main": "dist/index.js",
   "files": [
@@ -30,14 +30,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tinystacks/tinystacks-cdk-constructs.git"
+    "url": "git+https://github.com/tinystacks/tinystacks-aws-cdk-constructs.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tinystacks/tinystacks-cdk-constructs/issues"
+    "url": "https://github.com/tinystacks/tinystacks-aws-cdk-constructs/issues"
   },
-  "homepage": "https://github.com/tinystacks/tinystacks-cdk-constructs#readme",
+  "homepage": "https://github.com/tinystacks/tinystacks-aws-cdk-constructs#readme",
   "devDependencies": {
     "@types/jest": "^28.1.6",
     "@types/lodash.kebabcase": "^4.1.7",
