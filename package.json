@@ -1,6 +1,6 @@
 {
   "name": "@tinystacks/cdk-constructs",
-  "version": "0.0.1-local.25",
+  "version": "0.0.1-local.26",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
   "main": "dist/index.js",
   "files": [
