@@ -6,10 +6,10 @@ login () {
   npmEmail=$(git config --get user.email);
   nodeAuthToken=$(cat ~/.npmrc | grep '^//npm.pkg.github.com' | cut -d "=" -f2-);
 
-  NPM_EMAIL=$npmEmail NPM_USER=$npmUser NPM_PASS=$nodeAuthToken NPM_REGISTRY=http://local-npm-registry:4873 NPM_SCOPE=@tinystacks npm-cli-login;
+  NPM_EMAIL=$npmEmail NPM_USER=$npmUser NPM_PASS=$nodeAuthToken NPM_REGISTRY=http://localhost:4873 NPM_SCOPE=@tinystacks npm-cli-login;
 }
 
-localNpmUser=$(npm whoami --registry="http://local-npm-registry:4873" 2>/dev/null);
+localNpmUser=$(npm whoami --registry="http://localhost:4873" 2>/dev/null);
 
 if [ -z "$localNpmUser" ];
   then
