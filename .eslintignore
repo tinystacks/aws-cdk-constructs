@@ -1,0 +1,8 @@
+api-spec
+awscli-bundle
+cdk.out
+dist
+node_modules
+bin
+jest.config.js
+test

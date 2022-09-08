@@ -1,0 +1,21 @@
+## Compiled and dependencies
+*.js
+*.d.ts
+node_modules
+dist
+*.zip
+*.tgz
+
+## Test Coverage and Reports
+coverage
+
+## Workspace settings
+.vscode
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+# Do not ignore
+!jest.config.js
+!.github/workflows/dependency-check.js
