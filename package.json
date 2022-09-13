@@ -11,10 +11,10 @@
     "cleanup": "rm -rf dist || true && rm *.tgz || true",
     "clean-build": "npm ci && npm run cleanup && npm run build",
     "dependency-check": "./node_modules/.bin/depcheck",
-    "install-local-utils": "npm i @tinystacks/utils@local --@tinystacks:registry=http://local-npm-registry:4873",
+    "install-local-utils": "npm i @tinystacks/iac-utils@local --@tinystacks:registry=http://local-npm-registry:4873",
     "install-local-packages": "npm run install-local-utils",
-    "install-remote-utils": "npm i @tinystacks/utils@latest --@tinystacks:registry=https://npm.pkg.github.com",
-    "install-remote-packages": "npm uninstall @tinystacks/utils; npm run install-remote-utils",
+    "install-remote-utils": "npm i @tinystacks/iac-utils@latest --@tinystacks:registry=https://registry.npmjs.org",
+    "install-remote-packages": "npm uninstall @tinystacks/iac-utils; npm run install-remote-utils",
     "lint": "./node_modules/.bin/eslint --ext .ts,.js ./",
     "lint-fix": "./node_modules/.bin/eslint --ext .ts,.js --fix ./",
     "lint-no-warn": "./node_modules/.bin/eslint --ext .ts,.js --quiet ./",
@@ -57,7 +57,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@tinystacks/utils": "^0.0.1",
+    "@tinystacks/iac-utils": "^0.0.5",
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
     "lodash.kebabcase": "^4.1.1",
