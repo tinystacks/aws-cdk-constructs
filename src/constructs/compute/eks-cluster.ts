@@ -3,7 +3,7 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
-import { constructId } from '@tinystacks/utils';
+import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import kebabCase from 'lodash.kebabcase';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
