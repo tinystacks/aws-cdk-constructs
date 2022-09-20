@@ -25,9 +25,6 @@ export class EksStack extends cdk.Stack {
           internetAccess: true
         })
 
-        // new eks.EKS(app, "testCluster" ,{
-        //   vpc
-        // })
     }
 
 }

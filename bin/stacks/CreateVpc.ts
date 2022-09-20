@@ -16,8 +16,4 @@ export class CreateVpc extends cdk.Stack {
       })
     }
 
-      // this.vpcId = new VPC(this, "vpc", {
-      //       internetAccess: true
-      //     }).vpc.vpcId
-      //   }
   }
