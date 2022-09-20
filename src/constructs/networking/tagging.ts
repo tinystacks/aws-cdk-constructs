@@ -1,6 +1,6 @@
 
 import { Construct } from 'constructs';
-import { AwsCustomResource, AwsSdkCall, PhysicalResourceId, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
+import { AwsCustomResource, PhysicalResourceId, AwsCustomResourcePolicy } from 'aws-cdk-lib/custom-resources';
 
 // CDK does not support tagging existing subnets.
 // This is a custom construct to use AWS SDK to tag subnets.

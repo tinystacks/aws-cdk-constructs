@@ -6,7 +6,6 @@ import * as cdk from 'aws-cdk-lib';
 import { SubnetTagging } from '../networking/tagging'
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
-import kebabCase from 'lodash.kebabcase';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 
@@ -127,7 +126,7 @@ export class EKS extends Construct {
       cluster: this._cluster,
       version: eks.AlbControllerVersion.V2_4_1
     });
-    
+
     return albController;
   }
 
