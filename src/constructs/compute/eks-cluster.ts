@@ -30,7 +30,6 @@ export class EKS extends Construct {
   private readonly _instanceType: InstanceType;
   private readonly _cluster: eks.Cluster;
   private readonly _mastersRole: iam.Role;
-  private readonly _albController: eks.AlbController;
   private readonly _clusterName: string | undefined;
 
   constructor(scope: Construct, id: string, props: EksProps) {
@@ -120,14 +119,13 @@ export class EKS extends Construct {
 
 
 
-  private configureLoadBalancerController(): eks.AlbController {
+  private configureLoadBalancerController() {
 
     const albController = new eks.AlbController(this, 'MyAlbController', {
       cluster: this._cluster,
       version: eks.AlbControllerVersion.V2_4_1
     });
 
-    return albController;
   }
 
 <<<<<<< HEAD
@@ -250,9 +248,6 @@ export class EKS extends Construct {
   }
   public get instanceType(): InstanceType {
     return this._instanceType;
-  }
-  public get albController(): eks.AlbController {
-    return this._albController;
   }
   public get clusterName(): string | undefined {
     return this._clusterName;
