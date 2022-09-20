@@ -298,23 +298,33 @@ export class EKS extends Construct {
 >>>>>>> 64a5087 (create construct for tagging and also testing the albController creator for CDK)
   }
 
-  private tagSubnets() {
-    let subnets = [];
-    for (const subnet of this._vpc.privateSubnets) {
-      subnets.push(subnet.subnetId)
-    }
-    console.log(subnets);
-    const tagRequestParams = {
-      Resources: subnets,
+  private createTagParams(resources: string[], key: string, value: string) {
+    const params = {
+      Resources: resources,
       Tags: [
         {
-          Key: "kubernetes.io/role/internal-elb",
-          Value: "1"
+          Key: key,
+          Value: value
         }
       ]
     }
+    return params
+  }
 
-    new SubnetTagging(this, "tagPrivateSubnets", { ec2ResourceTagsRequest: tagRequestParams });
+  private tagSubnets() {
+    let publicSubnets = [];
+    let privateSubnets = [];
+    for (const subnet of this._vpc.publicSubnets) {
+      publicSubnets.push(subnet.subnetId)
+    }
+    for (const subnet of this._vpc.privateSubnets) {
+      privateSubnets.push(subnet.subnetId)
+    }
+    const publicTagRequestParams = this.createTagParams(publicSubnets, "kubernetes.io/role/elb", "1")
+    const privateTagRequestParams = this.createTagParams(publicSubnets, "kubernetes.io/role/internal-elb", "1")
+
+    new SubnetTagging(this, "tagPublicSubnets", { ec2ResourceTagsRequest: publicTagRequestParams });
+    new SubnetTagging(this, "tagPrivateSubnets", { ec2ResourceTagsRequest: privateTagRequestParams });
   }
 
   public get cluster(): eks.Cluster {
