@@ -71,17 +71,6 @@ export class VPC extends Construct {
       description: `${id}-vpc-id`,
       value: this.vpc.vpcId
     });
-
-    this.vpc.privateSubnets?.forEach((privateSubnet, index) => {
-      new CfnOutput(this, constructId('privateSubnet', (index + 1).toString(), 'id'), {
-        description: `private-subnet-${index + 1}-id`,
-        value: privateSubnet.subnetId
-      });
-      new CfnOutput(this, constructId('privateSubnet', (index + 1).toString(), 'az'), {
-        description: `private-subnet-${index + 1}-az`,
-        value: privateSubnet.availabilityZone
-      });
-    });
   }
 
   public get vpc (): ec2.IVpc {
