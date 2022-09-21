@@ -219,53 +219,9 @@ export class EKS extends Construct {
   }
 
   private createOutputs () {
-    new CfnOutput(this, constructId('cluster', 'name'), {
-      description: `${this.id}-cluster-name`,
-      value: this.cluster.clusterName
-    });
     new CfnOutput(this, constructId('cluster', 'arn'), {
       description: `${this.id}-cluster-arn`,
       value: this.cluster.clusterArn
-    });
-    new CfnOutput(this, constructId('cluster', 'role', 'name'), {
-      description: `${this.id}-cluster-role-name`,
-      value: this.cluster.role.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'role', 'arn'), {
-      description: `${this.id}-cluster-role-arn`,
-      value: this.cluster.role.roleArn
-    });
-    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'name'), {
-      description: `${this.id}-cluster-admin-role-name`,
-      value: this.cluster.adminRole.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'arn'), {
-      description: `${this.id}-cluster-admin-role-arn`,
-      value: this.cluster.adminRole.roleArn
-    });
-    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'name'), {
-      description: `${this.id}-cluster-kubectl-role-name`,
-      value: this.cluster.kubectlRole?.roleName || ''
-    });
-    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'arn'), {
-      description: `${this.id}-cluster-kubectl-role-arn`,
-      value: this.cluster.kubectlRole?.roleArn || ''
-    });
-    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'name'), {
-      description: `${this.id}-cluster-masters-role-name`,
-      value: this.mastersRole.roleName
-    });
-    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'arn'), {
-      description: `${this.id}-cluster-masters-role-arn`,
-      value: this.mastersRole.roleArn
-    });
-    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'name'), {
-      description: `${this.id}-eks-cluster-service-account-role-name`,
-      value: this.serviceAccount.role.roleName
-    });
-    new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'arn'), {
-      description: `${this.id}-eks-cluster-service-account-role-arn`,
-      value: this.serviceAccount.role.roleArn
     });
   }
 
