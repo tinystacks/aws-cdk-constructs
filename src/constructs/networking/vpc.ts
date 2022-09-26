@@ -40,6 +40,8 @@ export class VPC extends Construct {
       internalPeers,
       externalPeers
     } = props;
+
+    this.internetAccess = internetAccess;
     
     this.accountId = Stack.of(this).account;
     this.region = Stack.of(this).region;
