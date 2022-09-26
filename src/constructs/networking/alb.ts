@@ -40,8 +40,8 @@ export class ALB extends Construct {
         });
         // tag
         Tags.of(this).add('ingress.k8s.aws/resource', "LoadBalancer")
-        Tags.of(this).add('ingress.k8s.aws/cluster', clusterName)
-        Tags.of(this).add('ingress.k8s.aws/cluster', stackName)
+        Tags.of(this).add('elbv2.k8s.aws/cluster', clusterName)
+        Tags.of(this).add('ingress.k8s.aws/stack', stackName)
     }
     public get albName(): string {
         return this._alb.loadBalancerName

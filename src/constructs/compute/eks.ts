@@ -7,7 +7,11 @@ import { SubnetTagging } from '../networking/tagging'
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
+<<<<<<< HEAD:src/constructs/compute/eks-cluster.ts
 import { EksCleanup } from './eks-cleanup';
+=======
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+>>>>>>> 435ecd0 (added createalb stack and finished configuring alb for use by controller):src/constructs/compute/eks.ts
 
 export interface EksProps {
   vpc: ec2.IVpc;
@@ -77,6 +81,12 @@ export class EKS extends Construct {
 >>>>>>> 99a2c78 (remove alb controller variable)
     this.tagSubnets();
     this.createOutputs();
+
+    //store clustername in ssm
+    new ssm.StringParameter(this, 'clusterName', {
+      parameterName: 'clusterName',
+      stringValue: this._cluster.clusterName
+    })
   }
 
   private createCluster(): {
@@ -117,9 +127,9 @@ export class EKS extends Construct {
         subnetType: nodeSubnetType
       }
     });
-
     return { cluster, mastersRole };
   }
+
 
 
 
