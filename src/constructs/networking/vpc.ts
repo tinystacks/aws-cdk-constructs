@@ -14,11 +14,11 @@ interface ExternalVpcPeer {
   region?: string;
 }
 
-export interface EcsVpcProps {
+export interface VpcProps {
     cidrBlock?: string;
     internetAccess: boolean;
-    internalPeers?: VPC[],
-    externalPeers?: ExternalVpcPeer[]
+    internalPeers?: VPC[];
+    externalPeers?: ExternalVpcPeer[];
 }
 
 export class VPC extends Construct {
@@ -31,7 +31,7 @@ export class VPC extends Construct {
   private accountId: string;
   private region: string;
     
-  constructor (scope: Construct, id: string, props: EcsVpcProps) {
+  constructor (scope: Construct, id: string, props: VpcProps) {
     super(scope, id);
     
     const {
