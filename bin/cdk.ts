@@ -7,7 +7,12 @@ import { CreateAlb } from './stacks/createAlb';
 
 const app = new cdk.App();
 
-new CreateVpc(app, 'createVpc', { env: { account: '759747741894', region: 'us-west-2' } })
-new EksStack(app, "eksStack", { env: { account: '759747741894', region: 'us-west-2' } })
+const createVpcStack = new CreateVpc(app, 'createVpc', { env: { account: '759747741894', region: 'us-west-2' }, internetAccess: true })
+console.log(`outside: ${createVpcStack.ssmParameterName}`)
+const eksStackStack = new EksStack(app, "eksStack", { env: { account: '759747741894', region: 'us-west-2' }, vpcSsmParamName: createVpcStack.ssmParameterName, clusterName: "testCluster", internetAccess: createVpcStack.internetAccess })
+const createAlbStack = new CreateAlb(app, 'createAlb', { env: { account: '759747741894', region: 'us-west-2' }, vpcSsmParamName: createVpcStack.ssmParameterName,clusterNameSsmParamName: eksStackStack.clusterNameSsmParamName })
 
-new CreateAlb(app, 'createAlb', { env: { account: '759747741894', region: 'us-west-2' } })
+// eksStackStack.addDependency(createVpcStack)
+// createAlbStack.addDependency(eksStackStack)
+// createAlbStack.addDependency(createVpcStack)
+

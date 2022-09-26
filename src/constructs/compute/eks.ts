@@ -35,6 +35,7 @@ export class EKS extends Construct {
   private readonly _cluster: eks.Cluster;
   private readonly _mastersRole: iam.Role;
   private readonly _clusterName: string | undefined;
+  private readonly _clusterNameSsmParamName: string;
 
   constructor(scope: Construct, id: string, props: EksProps) {
     super(scope, id);
@@ -81,12 +82,13 @@ export class EKS extends Construct {
 >>>>>>> 99a2c78 (remove alb controller variable)
     this.tagSubnets();
     this.createOutputs();
-
+    this._clusterNameSsmParamName = `${id}-clusterName`
     //store clustername in ssm
-    new ssm.StringParameter(this, 'clusterName', {
-      parameterName: 'clusterName',
+    new ssm.StringParameter(this, `${id}-clusterName-ssm`, {
+      parameterName: this._clusterNameSsmParamName,
       stringValue: this._cluster.clusterName
     })
+    
   }
 
   private createCluster(): {
@@ -265,5 +267,8 @@ export class EKS extends Construct {
   }
   public get clusterName(): string | undefined {
     return this._clusterName;
+  }
+  public get clusterNameParameterName(): string {
+    return this._clusterNameSsmParamName
   }
 }
