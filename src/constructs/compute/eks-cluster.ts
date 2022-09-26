@@ -62,6 +62,7 @@ export class EKS extends Construct {
     this._cluster = cluster;
     this._mastersRole = mastersRole;
 <<<<<<< HEAD
+<<<<<<< HEAD
     this._serviceAccount = this.configureLoadBalancerController();
     const cleanup = new EksCleanup(this, constructId('EksCleanup'), {
       vpcId: this.vpc.vpcId,
@@ -71,6 +72,9 @@ export class EKS extends Construct {
 =======
     this._albController = this.configureLoadBalancerController();
 >>>>>>> 64a5087 (create construct for tagging and also testing the albController creator for CDK)
+=======
+    this.configureLoadBalancerController();
+>>>>>>> 99a2c78 (remove alb controller variable)
     this.tagSubnets();
     this.createOutputs();
   }
