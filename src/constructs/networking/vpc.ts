@@ -2,17 +2,23 @@ import { allocateCidrBlock, allocateSubnetMask, constructId } from '@tinystacks/
 import { CfnOutput, Stack } from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
+import { randomUUID } from 'crypto';
 import { VpcPeerDnsResolution } from './vpc-peer-dns-resolution';
+import { VpcPeeringRequestAccepter } from './vpc-peering-request-accepter';
+import { VpcPeeringRoutes } from './vpc-peering-routes';
 
-interface ExternalVpcPeers {
-
+interface ExternalVpcPeer {
+  vpcId: string;
+  cidrBlock: string;
+  accountId?: string;
+  region?: string;
 }
 
 export interface EcsVpcProps {
     cidrBlock?: string;
     internetAccess: boolean;
-    internalPeers: VPC[],
-    externalPeers: ExternalVpcPeers[]
+    internalPeers?: VPC[],
+    externalPeers?: ExternalVpcPeer[]
 }
 
 export class VPC extends Construct {
@@ -21,15 +27,23 @@ export class VPC extends Construct {
   private cidrBlock: string;
   private cidrBlockMask: number;
   private subnetMask: number;
+  private internetAccess: boolean;
+  private accountId: string;
+  private region: string;
     
   constructor (scope: Construct, id: string, props: EcsVpcProps) {
     super(scope, id);
     
     const {
       cidrBlock,
-      internetAccess
+      internetAccess,
+      internalPeers,
+      externalPeers
     } = props;
     
+    this.accountId = Stack.of(this).account;
+    this.region = Stack.of(this).region;
+
     if (cidrBlock) {
       this.cidrBlock = cidrBlock;
       this.cidrBlockMask = Number(cidrBlock?.split('/')?.at(1));
@@ -78,96 +92,144 @@ export class VPC extends Construct {
       description: `${id}-vpc-id`,
       value: this.vpc.vpcId
     });
+
+    if (internalPeers) {
+      for (const internalPeer of internalPeers) {
+        const connectionId = `${this.vpc.vpcId}-to-${internalPeer.vpc.vpcId}`;
+        const peeringConnectionRequest = this.requestPeeringConnection(internalPeer, connectionId);
+        const peeringConnectionId = peeringConnectionRequest.ref;
+        internalPeer.acceptPeeringConnection(this, peeringConnectionId, connectionId);
+      }
+    }
+    if (externalPeers) {
+      for (const externalPeer of externalPeers) {
+        const connectionId = `${this.vpc.vpcId}-to-${externalPeer.vpcId}`;
+        const peeringConnectionRequest = this.requestExternalPeeringConnection(externalPeer, connectionId);
+        const peeringConnectionId = peeringConnectionRequest.ref;
+        this.acceptExternalPeeringConnection(externalPeer, peeringConnectionId, connectionId);
+      }
+    }
   }
 
-  public requestPeeringConnection (requester: VpcInfo, accepter: VpcInfo, connectionId: string) {
-    // We don't deconstruct parameters here to make it more readable
-    const requesterIpRangeId = requester.ipRange.replace('/', '-').replace('.', '-');
-    const accepterIpRangeId = accepter.ipRange.replace('/', '-').replace('.', '-');
-    const peerPairId = `p-${requesterIpRangeId}-${accepterIpRangeId}`;
-    const peerVpcId = new SSMParameterReader(this, ConstructIds.peerVpcParam(accepter.stackName), {
-      parameterName: ResourceNames.peerVpcParamName(accepter.stackName),
-      region: accepter.region
-    });
+  public requestPeeringConnection (peer: VPC, connectionId: string) {
+    if (this.cidrBlock === peer.cidrBlock) {
+      throw new Error('Cannot peer two vpcs with the same cidr block!');
+    }
+
+    const peerPairId = `vpc-peering-connection-${connectionId}`;
     const peeringConnectionRequest = new ec2.CfnVPCPeeringConnection(
       this,
-      ConstructIds.peeringConnectionRequest(peerPairId),
+      constructId(peerPairId),
       {
-        peerVpcId: peerVpcId.getParameterValue(),
-        vpcId: this.vpc.vpcId,
-        peerOwnerId: accepter.accountId,
-        peerRegion: accepter.region
+        peerVpcId: peer.vpc.vpcId,
+        vpcId: this.vpc.vpcId
       }
     );
-    const paramId = ConstructIds.paramId(peerPairId);
-    new ssm.StringParameter(this, paramId, {
-      parameterName: paramId,
-      stringValue: peeringConnectionRequest.ref
-    });
-    this._requestedPeeringConnections.push(peeringConnectionRequest);
-    this.addPeeringRoutes(peeringConnectionRequest.ref, accepter.ipRange, connectionId);
-    new VpcPeerDnsResolution(this, ConstructIds.requesterDnsResolution(peerPairId), {
+    this.addPeeringRoutes(peeringConnectionRequest.ref, peer.cidrBlock, connectionId);
+    new VpcPeerDnsResolution(this, constructId(`requester-dns-resolution-${connectionId}`), {
       peeringConnectionId: peeringConnectionRequest.ref,
+      vpcArn: this.vpc.vpcArn,
+      accountId: this.accountId,
+      region: this.region,
       isRequester: true
     });
     return peeringConnectionRequest;
   }
 
-  public acceptPeeringConnection (requester: VpcInfo, accepter: VpcInfo, connectionId: string) {
-    const requesterIpRangeId = requester.ipRange.replace('/', '-').replace('.', '-');
-    const accepterIpRangeId = accepter.ipRange.replace('/', '-').replace('.', '-');
-    const peerPairId = `p-${requesterIpRangeId}-${accepterIpRangeId}`;
-    const peerId = new SSMParameterReader(this, ConstructIds.peerIdParam(peerPairId), {
-      parameterName: ResourceNames.peerIdParamName(peerPairId),
-      region: requester.region
-    });
-    const peeringConnectionId = peerId.getParameterValue();
-    this.addPeeringRoutes(peeringConnectionId, requester.ipRange, connectionId);
-    new VpcPeerDnsResolution(this, ConstructIds.accepterDnsResolution(peerPairId), {
+  public acceptPeeringConnection (requester: VPC, peeringConnectionId: string, connectionId: string) {
+    this.addPeeringRoutes(peeringConnectionId, requester.cidrBlock, connectionId);
+    new VpcPeerDnsResolution(this, constructId(`accepter-dns-resolution-${connectionId}`), {
       peeringConnectionId: peeringConnectionId,
+      vpcArn: this.vpc.vpcArn,
+      accountId: this.accountId,
+      region: this.region,
       isAccepter: true
     });
   }
   
-  public acceptExternalPeeringConnection (requester: { ipRange: string, peerId: string }, accepter: VpcInfo) {
-    const requesterIpRangeId = requester.ipRange.replace('/', '-').replace('.', '-');
-    const accepterIpRangeId = accepter.ipRange.replace('/', '-').replace('.', '-');
-    const peerPairId = `p-${requesterIpRangeId}-${accepterIpRangeId}`;
-   
-    this.addPeeringRoutes(requester.peerId, requester.ipRange, peerPairId);
-    new VpcPeerDnsResolution(this, `${peerPairId}-accepter-dns-resolution`, {
-      peeringConnectionId: requester.peerId,
+  public requestExternalPeeringConnection (peer: ExternalVpcPeer, connectionId: string) {
+    if (this.cidrBlock === peer.cidrBlock) {
+      throw new Error('Cannot peer two vpcs with the same cidr block!');
+    }
+    const peerPairId = `vpc-peering-connection-${connectionId}`;
+    const peeringConnectionRequest = new ec2.CfnVPCPeeringConnection(
+      this,
+      constructId(peerPairId),
+      {
+        peerVpcId: peer.vpcId,
+        vpcId: this.vpc.vpcId
+      }
+    );
+    this.addPeeringRoutes(peeringConnectionRequest.ref, peer.cidrBlock, connectionId);
+    new VpcPeerDnsResolution(this, constructId(`requester-dns-resolution-${connectionId}`), {
+      peeringConnectionId: peeringConnectionRequest.ref,
+      vpcArn: this.vpc.vpcArn,
+      accountId: this.accountId,
+      region: this.region,
+      isRequester: true
+    });
+    return peeringConnectionRequest;
+  }
+  
+  public acceptExternalPeeringConnection (peer: ExternalVpcPeer, peeringConnectionId: string, connectionId: string) {    
+    const {
+      accountId = this.accountId,
+      region = this.region,
+      vpcId
+    } = peer;
+
+    const externalVpcArn = `arn:aws:ec2:${region}:${accountId}:vpc/${vpcId}`;
+
+    new VpcPeeringRequestAccepter(this, constructId('PeeringRequestAccepter', connectionId), {
+      vpcArn: externalVpcArn,
+      peeringConnectionId: peeringConnectionId,
+      accountId,
+      region
+    });
+    new VpcPeeringRoutes(this, constructId('ExternalVpcPeeringRoutes', connectionId), {
+      vpcId: peer.vpcId,
+      peeringConnectionId,
+      destinationCidrBlock: this.cidrBlock,
+      accountId,
+      region,
+      uniqueId: randomUUID()
+    });
+    new VpcPeerDnsResolution(this, constructId(`accepter-dns-resolution-${connectionId}`), {
+      peeringConnectionId: peeringConnectionId,
+      vpcArn: externalVpcArn,
+      accountId,
+      region,
       isAccepter: true
     });
   }
 
-  public addPeeringRoutes (peerId: string, destinationCidrBlock: string, connectionId: string) {
+  public addPeeringRoutes (peeringConnectionId: string, destinationCidrBlock: string, connectionId: string) {
     this.vpc.publicSubnets.forEach((ps, index) => {
       const { routeTable } = ps as ec2.Subnet;
-      new ec2.CfnRoute(this, ConstructIds.peeredConnectionRoutePublic(index, connectionId), {
+      new ec2.CfnRoute(this, constructId(`PublicPeeringRoute${index}-${connectionId}`), {
         routeTableId: routeTable.routeTableId,
         destinationCidrBlock,
-        vpcPeeringConnectionId: peerId
+        vpcPeeringConnectionId: peeringConnectionId
       });
     });
 
-    if (this.hasNatGateway) {
+    if (this.internetAccess) {
       this.vpc.privateSubnets.forEach((ps, index) => {
         const { routeTable } = ps as ec2.Subnet;
-        new ec2.CfnRoute(this, ConstructIds.peeredConnectionRoutePrivate(index, connectionId), {
+        new ec2.CfnRoute(this, constructId(`PrivatePeeringRoute${index}-${connectionId}`), {
           routeTableId: routeTable.routeTableId,
           destinationCidrBlock,
-          vpcPeeringConnectionId: peerId
+          vpcPeeringConnectionId: peeringConnectionId
         });
       });
     }
 
     this.vpc.isolatedSubnets.forEach((ps, index) => {
       const { routeTable } = ps as ec2.Subnet;
-      new ec2.CfnRoute(this, ConstructIds.peeredConnectionRouteIsolated(index, connectionId), {
+      new ec2.CfnRoute(this, constructId(`IsolatedPeeringRoute${index}-${connectionId}`), {
         routeTableId: routeTable.routeTableId,
         destinationCidrBlock,
-        vpcPeeringConnectionId: peerId
+        vpcPeeringConnectionId: peeringConnectionId
       });
     });
   }

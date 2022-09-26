@@ -19,3 +19,4 @@ cdk.out
 # Do not ignore
 !jest.config.js
 !.github/workflows/dependency-check.js
+!src/constructs/networking/vpc-peering-routes/lambda.js

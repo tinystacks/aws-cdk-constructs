@@ -1,16 +1,22 @@
-import * as cdk from '@aws-cdk/core';
-import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from '@aws-cdk/custom-resources';
+import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import { Construct } from 'constructs';
 
 export interface VpcPeerDnsResolutionProps {
   peeringConnectionId: string,
+  vpcArn: string,
+  accountId: string;
+  region: string;
   isRequester?: boolean,
   isAccepter?: boolean
 }
 
 export class VpcPeerDnsResolution extends AwsCustomResource {
-  constructor (scope: cdk.Construct, id: string, props: VpcPeerDnsResolutionProps) {
+  constructor (scope: Construct, id: string, props: VpcPeerDnsResolutionProps) {
     const {
       peeringConnectionId,
+      vpcArn,
+      accountId,
+      region,
       isRequester,
       isAccepter
     } = props;
@@ -51,7 +57,10 @@ export class VpcPeerDnsResolution extends AwsCustomResource {
     }
 
     const policy = AwsCustomResourcePolicy.fromSdkCalls({
-      resources: AwsCustomResourcePolicy.ANY_RESOURCE
+      resources: [
+        vpcArn,
+        `arn:aws:ec2:${region}:${accountId}:vpc-peering-connection/*`
+      ]
     });
 
     super(scope, id, {
