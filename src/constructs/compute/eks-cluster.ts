@@ -125,7 +125,7 @@ export class EKS extends Construct {
 
   private configureLoadBalancerController() {
 
-    const albController = new eks.AlbController(this, 'MyAlbController', {
+    new eks.AlbController(this, 'AlbController', {
       cluster: this._cluster,
       version: eks.AlbControllerVersion.V2_4_1
     });
