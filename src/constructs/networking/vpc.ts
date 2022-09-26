@@ -24,7 +24,7 @@ export interface EcsVpcProps {
 export class VPC extends Construct {
   private readonly _vpc: ec2.IVpc;
   private subnetConfiguration: { cidrMask: number; name: string; subnetType: ec2.SubnetType; }[];
-  private cidrBlock: string;
+  private readonly _cidrBlock: string;
   private cidrBlockMask: number;
   private subnetMask: number;
   private internetAccess: boolean;
@@ -45,11 +45,11 @@ export class VPC extends Construct {
     this.region = Stack.of(this).region;
 
     if (cidrBlock) {
-      this.cidrBlock = cidrBlock;
+      this._cidrBlock = cidrBlock;
       this.cidrBlockMask = Number(cidrBlock?.split('/')?.at(1));
     } else {
       const autoAllocatedCidrBlock = allocateCidrBlock({ seed: id });
-      this.cidrBlock = autoAllocatedCidrBlock.cidrBlock;
+      this._cidrBlock = autoAllocatedCidrBlock.cidrBlock;
       this.cidrBlockMask = autoAllocatedCidrBlock.networkMask;
     }
 
@@ -236,5 +236,8 @@ export class VPC extends Construct {
 
   public get vpc (): ec2.IVpc {
     return this._vpc;
+  }
+  public get cidrBlock (): string {
+    return this._cidrBlock;
   }
 }
