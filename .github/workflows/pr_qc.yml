@@ -22,7 +22,6 @@ jobs:
           token: ${{ secrets.TS_GH_BOT }}
       - name: Quality Checks
         run: |
-          npm run install-remote-packages;
           npm ci;
           npm run qa;
           npm run build;

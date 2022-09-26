@@ -17,7 +17,6 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           token: ${{ secrets.TS_GH_BOT }}
       - run: |
-          npm run install-remote-packages;
           npm ci;
         env:
           NODE_AUTH_TOKEN: ${{ secrets.TS_GH_BOT }}
