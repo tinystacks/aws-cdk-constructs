@@ -1,5 +1,4 @@
-import * as cdk from 'aws-cdk-lib';
-import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
 
 export interface SecurityGroupsProps {
@@ -7,22 +6,22 @@ export interface SecurityGroupsProps {
   securityGroupRulesList: any[];
 }
 
-export class SecurityGroupsStack extends Construct {
+export class SecurityGroups extends Construct {
 
   public readonly securityGroup: ec2.SecurityGroup;
 
-  constructor(scope: Construct, id: string, props: SecurityGroupsProps) {
-      super(scope, id);
+  constructor (scope: Construct, id: string, props: SecurityGroupsProps) {
+    super (scope, id);
 
-      this.securityGroup = new ec2.SecurityGroup(this, 'security-group', {
-        vpc: props.vpc,
-        allowAllOutbound: true,
-        securityGroupName: 'SecurityGroup',
+    this.securityGroup = new ec2.SecurityGroup(this, 'security-group', {
+      vpc: props.vpc,
+      allowAllOutbound: true,
+      securityGroupName: 'SecurityGroup'
     });
 
-    props.securityGroupRulesList.map(sg => {
+    props.securityGroupRulesList.map((sg) => {
       this.securityGroup.addIngressRule(ec2.Peer.ipv4(sg.peer), ec2.Port.tcp(sg.port));
-     })
+    });
 
   
   }

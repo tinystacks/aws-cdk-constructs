@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
-import * as ec2 from 'aws-cdk-lib/aws-ec2'
-import * as rds from 'aws-cdk-lib/aws-rds'
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as rds from 'aws-cdk-lib/aws-rds';
 import { Construct } from 'constructs';
 
 export interface RdsProps {
@@ -15,55 +15,55 @@ export interface RdsProps {
   isImported?: boolean,
 }
 
-export class RdsStack extends Construct {
+export class Rds extends Construct {
 
   readonly RdsInstance: rds.DatabaseInstance;
 
-  constructor(scope: Construct, id: string, props: RdsProps) {
-      super(scope, id);
+  constructor (scope: Construct, id: string, props: RdsProps) {
+    super(scope, id);
 
-      if (!props.isImported|| !props.dbArn) {
+    if (!props.isImported|| !props.dbArn) {
 
-        this.RdsInstance = new rds.DatabaseInstance(this, 'rds-instance', {
-          engine: rds.DatabaseInstanceEngine.POSTGRES,
-          vpc: props.vpc,
-          vpcSubnets: {
-            subnetType: props.subnetType
-          },
-          instanceType: props.instanceType,
-          allocatedStorage: props.storageSize || 20,
-          maxAllocatedStorage: (props.storageSize || 20) * 2,
-          allowMajorVersionUpgrade: true,
-          instanceIdentifier: props.instanceIdentifier,
- 
-          databaseName: props.databaseName,
-          port: 5432,
-          securityGroups: props.securityGroupsList
-        });
+      this.RdsInstance = new rds.DatabaseInstance(this, 'rds-instance', {
+        engine: rds.DatabaseInstanceEngine.POSTGRES,
+        vpc: props.vpc,
+        vpcSubnets: {
+          subnetType: props.subnetType
+        },
+        instanceType: props.instanceType,
+        allocatedStorage: props.storageSize || 20,
+        maxAllocatedStorage: (props.storageSize || 20) * 2,
+        allowMajorVersionUpgrade: true,
+        instanceIdentifier: props.instanceIdentifier,
 
-        new cdk.CfnOutput(this, 'postgres-secret', {
-          value: `${props.instanceIdentifier}-postgres-secret:${this.RdsInstance.secret?.secretArn}`
-        });
+        databaseName: props.databaseName,
+        port: 5432,
+        securityGroups: props.securityGroupsList
+      });
 
-        /* How to install @tinystacks/common?
-        const dbSecretArnOutputId = OutputDescriptions.secretArn(props.instanceIdentifier);
-        new cdk.CfnOutput(this, dbSecretArnOutputId, {
-          description: dbSecretArnOutputId,
-          value: this.RdsInstance.secret?.secretArn || ''
-        });
-        */
+      new cdk.CfnOutput(this, 'postgres-secret', {
+        value: `${props.instanceIdentifier}-postgres-secret:${this.RdsInstance.secret?.secretArn}`
+      });
 
-      } else {
+      /* How to install @tinystacks/common?
+      const dbSecretArnOutputId = OutputDescriptions.secretArn(props.instanceIdentifier);
+      new cdk.CfnOutput(this, dbSecretArnOutputId, {
+        description: dbSecretArnOutputId,
+        value: this.RdsInstance.secret?.secretArn || ''
+      });
+      */
 
-        const identifier = props.dbArn.split('db:')[1];
-        this.RdsInstance = rds.DatabaseInstance.fromDatabaseInstanceAttributes(this, 'postgres', {
+    } else {
+
+      const identifier = props.dbArn.split('db:')[1];
+      this.RdsInstance = rds.DatabaseInstance.fromDatabaseInstanceAttributes(this, 'postgres', {
         instanceIdentifier: identifier,
         instanceEndpointAddress: '',
         securityGroups: props.securityGroupsList,
-        port: 5432,
+        port: 5432
       }) as rds.DatabaseInstance;
 
-      }
+    }
   
   }
 
