@@ -20,3 +20,4 @@ cdk.out
 !jest.config.js
 !.github/workflows/dependency-check.js
 !src/constructs/networking/vpc-peering-routes/lambda.js
+!src/constructs/compute/eks-cleanup/lambda.js

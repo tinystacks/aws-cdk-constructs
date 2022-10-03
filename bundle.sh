@@ -1,1 +1,2 @@
 cp ./src/constructs/networking/vpc-peering-routes/lambda.js ./dist/constructs/networking/vpc-peering-routes/lambda.js;
+cp ./src/constructs/compute/eks-cleanup/lambda.js ./dist/constructs/compute/eks-cleanup/lambda.js;

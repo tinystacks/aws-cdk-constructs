@@ -7,6 +7,7 @@ import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import kebabCase from 'lodash.kebabcase';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
+import { EksCleanup } from './eks-cleanup';
 
 
 export interface EksProps {
@@ -44,7 +45,7 @@ export class EKS extends Construct {
       maximumCapacity,
       instanceClass = InstanceClass.BURSTABLE3,
       instanceSize = InstanceSize.MEDIUM,
-      clusterName
+      clusterName = `c-${new Date().getTime()}`
     } = props;
     
     this.id = id;
@@ -59,9 +60,15 @@ export class EKS extends Construct {
       cluster,
       mastersRole
     } = this.createCluster();
+    
     this._cluster = cluster;
     this._mastersRole = mastersRole;
     this._serviceAccount = this.configureLoadBalancerController();
+    const cleanup = new EksCleanup(this, constructId('EksCleanup'), {
+      vpcId: this.vpc.vpcId,
+      clusterName
+    });
+    this.cluster.node.addDependency(cleanup);
     this.tagSubnets();
     this.createOutputs();
   }
