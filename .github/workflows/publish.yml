@@ -53,5 +53,5 @@ jobs:
           git pull
           npm publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.TS_GH_BOT }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_DEPLOY_KEY }}
           GH_TOKEN: ${{ secrets.TS_GH_BOT }}
