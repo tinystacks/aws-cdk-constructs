@@ -1,7 +1,7 @@
 import { Construct } from 'constructs';
 import * as s3Deployment from 'aws-cdk-lib/aws-s3-deployment'
 import * as s3 from 'aws-cdk-lib/aws-s3';
-import { Bucket, BucketProps } from 'aws-cdk-lib/aws-s3';
+import { BucketProps } from 'aws-cdk-lib/aws-s3';
 
 
 interface S3Props {
