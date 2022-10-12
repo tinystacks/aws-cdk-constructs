@@ -9,10 +9,16 @@ export interface RdsProps {
   instanceType: ec2.InstanceType;
   subnetType: ec2.SubnetType;
   databaseName: string;
-  instanceIdentifier?: string;
+  instanceIdentifier: string;
   storageSize?: number;
   dbArn?: string;
   isImported?: boolean,
+}
+
+export class OutputDescriptions {
+  static secretArn (instanceIdentifier: string): string {
+    return `${instanceIdentifier}-secret-arn`;
+  }
 }
 
 export class Rds extends Construct {
@@ -45,13 +51,11 @@ export class Rds extends Construct {
         value: `${props.instanceIdentifier}-postgres-secret:${this.RdsInstance.secret?.secretArn}`
       });
 
-      /* How to install @tinystacks/common?
       const dbSecretArnOutputId = OutputDescriptions.secretArn(props.instanceIdentifier);
       new cdk.CfnOutput(this, dbSecretArnOutputId, {
         description: dbSecretArnOutputId,
         value: this.RdsInstance.secret?.secretArn || ''
       });
-      */
 
     } else {
 
