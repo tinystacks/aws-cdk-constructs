@@ -7,11 +7,7 @@ import { SubnetTagging } from '../networking/tagging'
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
-<<<<<<< HEAD:src/constructs/compute/eks-cluster.ts
-import { EksCleanup } from './eks-cleanup';
-=======
 import * as ssm from 'aws-cdk-lib/aws-ssm';
->>>>>>> 435ecd0 (added createalb stack and finished configuring alb for use by controller):src/constructs/compute/eks.ts
 
 export interface EksProps {
   vpc: ec2.IVpc;
@@ -48,7 +44,7 @@ export class EKS extends Construct {
       maximumCapacity,
       instanceClass = InstanceClass.BURSTABLE3,
       instanceSize = InstanceSize.MEDIUM,
-      clusterName = `c-${new Date().getTime()}`
+      clusterName
     } = props;
 
     this.id = id;
@@ -63,23 +59,9 @@ export class EKS extends Construct {
       cluster,
       mastersRole
     } = this.createCluster();
-    
     this._cluster = cluster;
     this._mastersRole = mastersRole;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    this._serviceAccount = this.configureLoadBalancerController();
-    const cleanup = new EksCleanup(this, constructId('EksCleanup'), {
-      vpcId: this.vpc.vpcId,
-      clusterName
-    });
-    this.cluster.node.addDependency(cleanup);
-=======
-    this._albController = this.configureLoadBalancerController();
->>>>>>> 64a5087 (create construct for tagging and also testing the albController creator for CDK)
-=======
     this.configureLoadBalancerController();
->>>>>>> 99a2c78 (remove alb controller variable)
     this.tagSubnets();
     this.createOutputs();
     this._clusterNameSsmParamName = `${id}-clusterName`
@@ -144,31 +126,15 @@ export class EKS extends Construct {
 
   }
 
-<<<<<<< HEAD
-  private tagSubnets () {
-    for (const subnet of this.vpc.privateSubnets) {
-      const importedSubnet = ec2.Subnet.fromSubnetId(this, `${subnet.subnetId}`, subnet.subnetId);
-      cdk.Tags.of(importedSubnet).add(
-        'kubernetes.io/role/internal-elb',
-        '1'
-      );
-    }
-  }
-
-  private createOutputs () {
-=======
   private createOutputs() {
     new CfnOutput(this, constructId('cluster', 'name'), {
       description: `${this.id}-cluster-name`,
       value: this.cluster.clusterName
     });
->>>>>>> 64a5087 (create construct for tagging and also testing the albController creator for CDK)
     new CfnOutput(this, constructId('cluster', 'arn'), {
       description: `${this.id}-cluster-arn`,
       value: this.cluster.clusterArn
     });
-<<<<<<< HEAD
-=======
     new CfnOutput(this, constructId('cluster', 'role', 'name'), {
       description: `${this.id}-cluster-role-name`,
       value: this.cluster.role.roleName
@@ -209,7 +175,6 @@ export class EKS extends Construct {
     //   description: `${this.id}-eks-cluster-service-account-role-arn`,
     //   value: this.serviceAccount.role.roleArn
     // });
->>>>>>> 64a5087 (create construct for tagging and also testing the albController creator for CDK)
   }
 
   private createTagParams(resources: string[], key: string, value: string) {
