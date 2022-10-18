@@ -2,6 +2,7 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface EksNodegroupProps {
   nodegroupName: string;
@@ -24,12 +25,12 @@ export class EksNodegroup extends Construct {
   constructor (scope: Construct, id: string, props: EksNodegroupProps) {
     super (scope, id);
 
-    const nodegroupRole = new iam.Role(this, 'eks-nodegroup-role', {
+    const nodegroupRole = new iam.Role(this, constructId('eks', 'nodegroup', 'role'), {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
       managedPolicies: props.managedPolicies
     });
 
-    props.eksCluster.addNodegroupCapacity ('node-group', {
+    props.eksCluster.addNodegroupCapacity (constructId('node', 'group'), {
       nodegroupName: props.nodegroupName,
       minSize: props.nodeMinSize,
       maxSize: props.nodeMaxSize,

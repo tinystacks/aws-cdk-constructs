@@ -2,6 +2,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as eks from 'aws-cdk-lib/aws-eks';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface EksClusterProps {
   clusterName: string;
@@ -18,12 +19,12 @@ export class EksCluster extends Construct {
   constructor (scope: Construct, id: string, props: EksClusterProps) {
     super (scope, id);
 
-    const clusterRole = new iam.Role(this, 'eks-cluster-role', {
+    const clusterRole = new iam.Role(this, constructId('eks', 'cluster', 'role'), {
       assumedBy: new iam.ServicePrincipal('eks.amazonaws.com'),
       managedPolicies: props.managedPolicies
     });
 
-    this.eks_cluster = new eks.Cluster(this, 'eks-cluster', {
+    this.eks_cluster = new eks.Cluster(this, constructId('eks', 'cluster'), {
       clusterName: props.clusterName,
       vpc: props.vpc,
       version: props.version,
