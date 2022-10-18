@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface RdsProps {
   vpc: ec2.Vpc;
@@ -15,7 +16,7 @@ export interface RdsProps {
   isImported?: boolean,
 }
 
-export class OutputDescriptions {
+class OutputDescriptions {
   static secretArn (instanceIdentifier: string): string {
     return `${instanceIdentifier}-secret-arn`;
   }
@@ -30,7 +31,7 @@ export class Rds extends Construct {
 
     if (!props.isImported|| !props.dbArn) {
 
-      this.RdsInstance = new rds.DatabaseInstance(this, 'rds-instance', {
+      this.RdsInstance = new rds.DatabaseInstance(this, constructId('rds', 'instance'), {
         engine: rds.DatabaseInstanceEngine.POSTGRES,
         vpc: props.vpc,
         vpcSubnets: {
@@ -60,7 +61,7 @@ export class Rds extends Construct {
     } else {
 
       const identifier = props.dbArn.split('db:')[1];
-      this.RdsInstance = rds.DatabaseInstance.fromDatabaseInstanceAttributes(this, 'postgres', {
+      this.RdsInstance = rds.DatabaseInstance.fromDatabaseInstanceAttributes(this, constructId('postgres'), {
         instanceIdentifier: identifier,
         instanceEndpointAddress: '',
         securityGroups: props.securityGroupsList,
