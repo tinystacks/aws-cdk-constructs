@@ -43,7 +43,7 @@ export class Redis extends Construct {
     this.initRedisCache()
   }
 
-  public initRedisCache () {
+  public initRedisCache (): void {
     const redisSecGroup = new ec2.SecurityGroup(
       this, this.id + 'redis-sg', {
         vpc: this.vpc
@@ -52,7 +52,7 @@ export class Redis extends Construct {
     this.secGroups.forEach((sg: string, index: number) => {
       redisSecGroup.addIngressRule(ec2.SecurityGroup.fromSecurityGroupId(this, `redis-cache-sg-${index}`, sg), ec2.Port.tcp(6379))
     })
-    if (this.primaryVpcCidrBlock != undefined) {
+    if (this.primaryVpcCidrBlock !== undefined) {
       redisSecGroup.addIngressRule(ec2.Peer.ipv4(this.primaryVpcCidrBlock), ec2.Port.tcp(6379))
     }
 
@@ -79,10 +79,10 @@ export class Redis extends Construct {
         replicationGroupId: this.dbIdentifier,
         replicationGroupDescription: 'redis cluster',
         atRestEncryptionEnabled: true,
-        cacheNodeType: this.instanceType || 'cache.t4g.micro',
+        cacheNodeType: this.instanceType ?? 'cache.t4g.micro',
         engine: 'redis',
         transitEncryptionEnabled: true,
-        //this is an unsafe unwrap of the secret value which may be exposed
+        // this is an unsafe unwrap of the secret value which may be exposed
         authToken: this.elasticacheSecret.secretValue.unsafeUnwrap(),
         multiAzEnabled: true,
         numNodeGroups: 1,
@@ -95,15 +95,15 @@ export class Redis extends Construct {
     )
   }
 
-  public get redisEndpoint () {
+  public get redisEndpoint (): string {
     return this.replicationGroup.attrPrimaryEndPointAddress
   }
 
-  public get redisPort () {
+  public get redisPort (): string {
     return this.replicationGroup.attrPrimaryEndPointPort
   }
 
-  public get redisAuthTokenSecretArn () {
+  public get redisAuthTokenSecretArn (): string {
     return this.elasticacheSecret.secretArn
   }
 }
