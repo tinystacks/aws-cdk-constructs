@@ -16,12 +16,6 @@ export interface RdsProps {
   isImported?: boolean,
 }
 
-class OutputDescriptions {
-  static secretArn (instanceIdentifier: string): string {
-    return `${instanceIdentifier}-secret-arn`;
-  }
-}
-
 export class Rds extends Construct {
 
   readonly RdsInstance: rds.DatabaseInstance;
@@ -52,7 +46,7 @@ export class Rds extends Construct {
         value: `${props.instanceIdentifier}-postgres-secret:${this.RdsInstance.secret?.secretArn}`
       });
 
-      const dbSecretArnOutputId = OutputDescriptions.secretArn(props.instanceIdentifier);
+      const dbSecretArnOutputId = Rds.OutputDescriptions.secretArn(props.instanceIdentifier);
       new cdk.CfnOutput(this, dbSecretArnOutputId, {
         description: dbSecretArnOutputId,
         value: this.RdsInstance.secret?.secretArn || ''
@@ -83,5 +77,13 @@ export class Rds extends Construct {
   public get instanceIdentifier (): string {
     return this.RdsInstance.instanceIdentifier;
   }
+
+  static OutputDescriptions: {
+    secretArn: (instanceIdentifier: string) => string
+  } = {
+      secretArn (instanceIdentifier: string): string {
+        return `${instanceIdentifier}-secret-arn`;
+      }
+    };
 
 }
