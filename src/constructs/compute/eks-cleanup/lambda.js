@@ -89,11 +89,11 @@ async function deleteDriftedSecurityGroups (ec2Client, props) {
   const driftedSecurityGroups = await getDriftedSecurityGroups(ec2Client, props);
   console.info('Plan is to delete the following security groups: ', JSON.stringify(driftedSecurityGroups));
   for (const sg of driftedSecurityGroups) {
-    const { SecurityGroupId } = sg;
-    await ec2Client.deleteSecurityGroup({ SecurityGroupId })
+    const { GroupId } = sg;
+    await ec2Client.deleteSecurityGroup({ GroupId })
       .promise()
       .catch((error) => {
-        console.error(`Failed to delete security group: ${SecurityGroupId}`);
+        console.error(`Failed to delete security group: ${GroupId}`);
         console.error(error);
         return;
       });
