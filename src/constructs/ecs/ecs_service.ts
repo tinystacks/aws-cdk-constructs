@@ -3,6 +3,7 @@ import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface EcsServiceProps {
   containerName: string;
@@ -14,7 +15,7 @@ export interface EcsServiceProps {
   desiredCount: number;
   applicationPort: number;
   ecsSecurityGroup: ec2.SecurityGroup;
-  targetGroup: elbv2.ApplicationTargetGroup;
+  albTargetGroup: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
 }
 
@@ -23,14 +24,14 @@ export class EcsService extends Construct {
   constructor (scope: Construct, id: string, props: EcsServiceProps) {
     super (scope, id);
 
-    const ecsTaskRole = new iam.Role(this, 'ecs-task-role', {
+    const ecsTaskRole = new iam.Role(this, constructId('ecs', 'TaskRole'), {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
       roleName: 'ecs-task-role',
       description: 'Role that the api task definitions use'
     });
 
     ecsTaskRole.attachInlinePolicy(
-      new iam.Policy(this, 'ecs-task-policy', {
+      new iam.Policy(this, constructId('ecs', 'TaskPolicy'), {
         statements: [
           new iam.PolicyStatement({
             effect: iam.Effect.ALLOW,
@@ -41,7 +42,7 @@ export class EcsService extends Construct {
       })
     );
 
-    const ecsTaskDefinition = new ecs.TaskDefinition(this, 'ecs-task-definition', {
+    const ecsTaskDefinition = new ecs.TaskDefinition(this, constructId('ecs', 'TaskDefinition'), {
       family: 'task',
       compatibility: ecs.Compatibility.EC2_AND_FARGATE,
       cpu: String(props.cpu),
@@ -50,7 +51,7 @@ export class EcsService extends Construct {
       taskRole: ecsTaskRole
     });
 
-    const ecsContainer = ecsTaskDefinition.addContainer('ecs-container', {
+    const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
       containerName: props.containerName,
       image: ecs.RepositoryImage.fromRegistry(props.containerImage),
       memoryLimitMiB: props.memoryLimitMiB,
@@ -60,7 +61,7 @@ export class EcsService extends Construct {
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
 
-    const ecsService = new ecs.FargateService(this, 'ecs-fargfate-service', {
+    const ecsService = new ecs.FargateService(this, constructId('ecs', 'FargfateService'), {
       cluster: props.ecsCluster,
       desiredCount: props.desiredCount,
       taskDefinition: ecsTaskDefinition,
@@ -68,7 +69,7 @@ export class EcsService extends Construct {
       assignPublicIp: true
     });
 
-    ecsService.attachToApplicationTargetGroup(props.targetGroup);
+    ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
   
   }
 

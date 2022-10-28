@@ -2,23 +2,25 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as cdk from 'aws-cdk-lib';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface AlbProps {
   vpc: ec2.Vpc;
   applicationPort: number;
   healthCheckPath: string;
+  albSecurityGroup: ec2.SecurityGroup;
 }
 
 export class Alb extends Construct {
   
-  public readonly albTargetGroup: elbv2.ApplicationTargetGroup;
+  readonly albTargetGroup: elbv2.ApplicationTargetGroup;
   
   constructor (scope: Construct, id: string, props: AlbProps) {
     super (scope, id);
 
     const alb = new elbv2.ApplicationLoadBalancer(
       this,
-      'alb',
+      constructId('alb'),
       {
         vpc: props.vpc,
         vpcSubnets: { subnets: props.vpc.publicSubnets },
@@ -26,9 +28,11 @@ export class Alb extends Construct {
       }
     );
 
+    alb.addSecurityGroup(props.albSecurityGroup);
+
     this.albTargetGroup = new elbv2.ApplicationTargetGroup(
       this,
-      'alb-target-group',
+      constructId('alb', 'TargetGroup'),
       {
         port: props.applicationPort,
         vpc: props.vpc,
@@ -42,16 +46,16 @@ export class Alb extends Construct {
       protocol: elbv2.Protocol.HTTP
     });
 
-    const albListener = alb.addListener('alb-listener', {
+    const albListener = alb.addListener(constructId('alb', 'Listener'), {
       open: true,
       port: 80
     });
 
-    albListener.addTargetGroups('alb-listener-target-group', {
+    albListener.addTargetGroups(constructId('alb', 'Listener', 'TargetGroup'), {
       targetGroups: [this.albTargetGroup]
     });
 
-    new cdk.CfnOutput(this, 'AlbDnsName', {
+    new cdk.CfnOutput(this, constructId('alb', 'DnsName'), {
       value: alb.loadBalancerDnsName
     });
   

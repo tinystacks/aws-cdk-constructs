@@ -1,6 +1,7 @@
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import { Construct } from 'constructs';
+import { constructId } from '@tinystacks/iac-utils';
 
 export interface EcsClusterProps {
   clusterName: string;
@@ -17,12 +18,12 @@ export class EcsCluster extends Construct {
   constructor (scope: Construct, id: string, props: EcsClusterProps) {
     super (scope, id);
 
-    this.ecsCluster = new ecs.Cluster(this, 'ecs-cluster', {
+    this.ecsCluster = new ecs.Cluster(this, constructId('ecs', 'Cluster'), {
       clusterName: props.clusterName,
       vpc: props.vpc
     });
 
-    this.ecsCluster.addCapacity('ecs-cluster-add-capacity', {
+    this.ecsCluster.addCapacity(constructId('ecs', 'Cluster', 'AddCapacity'), {
       instanceType: props.instanceType,
       machineImage: props.machineImage,
       desiredCapacity: props.desiredCapacity
