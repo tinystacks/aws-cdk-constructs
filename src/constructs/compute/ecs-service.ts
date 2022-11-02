@@ -7,7 +7,7 @@ import { constructId } from '@tinystacks/iac-utils';
 
 export interface EcsServiceProps {
   containerName: string;
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   ecsCluster: ecs.Cluster;
   containerImage: string;
   memoryLimitMiB: number;
@@ -15,6 +15,7 @@ export interface EcsServiceProps {
   desiredCount: number;
   applicationPort: number;
   ecsSecurityGroup: ec2.SecurityGroup;
+  ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
 }
@@ -32,13 +33,7 @@ export class EcsService extends Construct {
 
     ecsTaskRole.attachInlinePolicy(
       new iam.Policy(this, constructId('ecs', 'TaskPolicy'), {
-        statements: [
-          new iam.PolicyStatement({
-            effect: iam.Effect.ALLOW,
-            actions: ['SES:*'],
-            resources: ['*']
-          })
-        ]
+        statements: props.ecsIamPolicyStatements
       })
     );
 

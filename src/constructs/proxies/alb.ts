@@ -3,20 +3,34 @@ import * as cdk from 'aws-cdk-lib';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
+import { SecurityGroups } from '../networking/securitygroups';
 
 export interface AlbProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   applicationPort: number;
   healthCheckPath: string;
-  albSecurityGroup: ec2.SecurityGroup;
+  albSecurityGroup?: ec2.ISecurityGroup;
 }
 
 export class Alb extends Construct {
   
-  readonly albTargetGroup: elbv2.ApplicationTargetGroup;
+  readonly _albTargetGroup: elbv2.ApplicationTargetGroup;
+  readonly albSecurityGroup: ec2.SecurityGroup;
   
   constructor (scope: Construct, id: string, props: AlbProps) {
     super (scope, id);
+
+    const albSecurityGroupRules = [
+      { name: 'Internet to ALB', port: ec2.Port.tcp(80), peer: ec2.Peer.anyIpv4() }
+    ];
+
+    const {
+      albSecurityGroup = new SecurityGroups(this, constructId('alb', 'SecurityGroup'), {
+        vpc: props.vpc,
+        securityGroupName: 'albSecurityGroup',
+        securityGroupRulesList: albSecurityGroupRules
+      }).securityGroup
+    } = props;
 
     const alb = new elbv2.ApplicationLoadBalancer(
       this,
@@ -28,9 +42,9 @@ export class Alb extends Construct {
       }
     );
 
-    alb.addSecurityGroup(props.albSecurityGroup);
+    alb.addSecurityGroup(albSecurityGroup);
 
-    this.albTargetGroup = new elbv2.ApplicationTargetGroup(
+    this._albTargetGroup = new elbv2.ApplicationTargetGroup(
       this,
       constructId('alb', 'TargetGroup'),
       {
@@ -41,7 +55,7 @@ export class Alb extends Construct {
       }
     );
 
-    this.albTargetGroup.configureHealthCheck({
+    this._albTargetGroup.configureHealthCheck({
       path: props.healthCheckPath,
       protocol: elbv2.Protocol.HTTP
     });
@@ -52,7 +66,7 @@ export class Alb extends Construct {
     });
 
     albListener.addTargetGroups(constructId('alb', 'Listener', 'TargetGroup'), {
-      targetGroups: [this.albTargetGroup]
+      targetGroups: [this._albTargetGroup]
     });
 
     new cdk.CfnOutput(this, constructId('alb', 'DnsName'), {
@@ -61,8 +75,8 @@ export class Alb extends Construct {
   
   }
 
-  public get albTargetGroupThis (): elbv2.ApplicationTargetGroup {
-    return this.albTargetGroup;
+  public get albTargetGroup (): elbv2.ApplicationTargetGroup {
+    return this._albTargetGroup;
   }
 
 }

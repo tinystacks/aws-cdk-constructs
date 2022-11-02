@@ -3,7 +3,7 @@ import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
 
 export interface SecurityGroupsProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   securityGroupName: string;
   securityGroupRulesList: any[];
 }
@@ -24,7 +24,7 @@ export class SecurityGroups extends Construct {
     props.securityGroupRulesList.map((sg) => {
       this.securityGroup.addIngressRule(sg.peer, sg.port, sg.name);
     });
-
   
   }
+
 }

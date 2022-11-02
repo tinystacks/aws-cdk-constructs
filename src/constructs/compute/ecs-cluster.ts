@@ -5,10 +5,7 @@ import { constructId } from '@tinystacks/iac-utils';
 
 export interface EcsClusterProps {
   clusterName: string;
-  vpc: ec2.Vpc;
-  instanceType: ec2.InstanceType;
-  machineImage: ec2.IMachineImage;
-  desiredCapacity: number;
+  vpc: ec2.IVpc;
 }
 
 export class EcsCluster extends Construct {
@@ -21,12 +18,6 @@ export class EcsCluster extends Construct {
     this.ecsCluster = new ecs.Cluster(this, constructId('ecs', 'Cluster'), {
       clusterName: props.clusterName,
       vpc: props.vpc
-    });
-
-    this.ecsCluster.addCapacity(constructId('ecs', 'Cluster', 'AddCapacity'), {
-      instanceType: props.instanceType,
-      machineImage: props.machineImage,
-      desiredCapacity: props.desiredCapacity
     });
   
   }
