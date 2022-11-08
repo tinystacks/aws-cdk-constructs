@@ -1,4 +1,4 @@
-/*eslint-env node*/
+/* eslint-env node */
 const AWS = require('aws-sdk');
 const response = require('cfn-response');
 
@@ -80,7 +80,6 @@ async function deleteDriftedEnis (ec2Client, props) {
       .catch((error) => {
         console.error(`Failed to delete ENI: ${NetworkInterfaceId}`);
         console.error(error);
-        return;
       });
   }
 }
@@ -95,7 +94,6 @@ async function deleteDriftedSecurityGroups (ec2Client, props) {
       .catch((error) => {
         console.error(`Failed to delete security group: ${GroupId}`);
         console.error(error);
-        return;
       });
   }
 }
@@ -109,7 +107,7 @@ async function handler (event, context) {
       await deleteDriftedSecurityGroups(ec2Client, props);
       response.send(event, context, response.SUCCESS);
       return;
-    } 
+    }
     response.send(event, context, response.SUCCESS);
     return;
   } catch (error) {
