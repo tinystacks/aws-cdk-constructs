@@ -2,11 +2,11 @@ import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourc
 import { Construct } from 'constructs';
 
 export interface VpcPeerDnsResolutionProps {
-  peeringConnectionId: string,
-  vpcArn: string,
-  accountId: string;
-  region: string;
-  isRequester?: boolean,
+  peeringConnectionId: string
+  vpcArn: string
+  accountId: string
+  region: string
+  isRequester?: boolean
   isAccepter?: boolean
 }
 
@@ -39,19 +39,19 @@ export class VpcPeerDnsResolution extends AwsCustomResource {
     };
 
     if (isRequester) {
-      enableDnsResolution.parameters['RequesterPeeringConnectionOptions'] = {
+      enableDnsResolution.parameters.RequesterPeeringConnectionOptions = {
         AllowDnsResolutionFromRemoteVpc: true
       };
-      disableDnsResolution.parameters['RequesterPeeringConnectionOptions'] = {
+      disableDnsResolution.parameters.RequesterPeeringConnectionOptions = {
         AllowDnsResolutionFromRemoteVpc: false
       };
     }
 
     if (isAccepter) {
-      enableDnsResolution.parameters['AccepterPeeringConnectionOptions'] = {
+      enableDnsResolution.parameters.AccepterPeeringConnectionOptions = {
         AllowDnsResolutionFromRemoteVpc: true
       };
-      disableDnsResolution.parameters['AccepterPeeringConnectionOptions'] = {
+      disableDnsResolution.parameters.AccepterPeeringConnectionOptions = {
         AllowDnsResolutionFromRemoteVpc: false
       };
     }
