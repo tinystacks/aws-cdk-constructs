@@ -9,16 +9,15 @@ import kebabCase from 'lodash.kebabcase';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 
-
 export interface EksProps {
-    vpc: ec2.IVpc;
-    internetAccess: boolean;
-    defaultCapacity?: number;
-    minimumCapacity?: number;
-    maximumCapacity?: number;
-    instanceClass?: InstanceClass;
-    instanceSize?: InstanceSize;
-    clusterName?: string;
+  vpc: ec2.IVpc
+  internetAccess: boolean
+  defaultCapacity?: number
+  minimumCapacity?: number
+  maximumCapacity?: number
+  instanceClass?: InstanceClass
+  instanceSize?: InstanceSize
+  clusterName?: string
 }
 
 export class EKS extends Construct {
@@ -36,7 +35,7 @@ export class EKS extends Construct {
 
   constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
-    
+
     const {
       vpc,
       internetAccess,
@@ -47,7 +46,7 @@ export class EKS extends Construct {
       instanceSize = InstanceSize.MEDIUM,
       clusterName = `c-${new Date().getTime()}`
     } = props;
-    
+
     this.id = id;
     this._vpc = vpc;
     this._internetAccess = internetAccess;
@@ -60,7 +59,7 @@ export class EKS extends Construct {
       cluster,
       mastersRole
     } = this.createCluster();
-    
+
     this._cluster = cluster;
     this._mastersRole = mastersRole;
     this._serviceAccount = this.configureLoadBalancerController();
@@ -74,9 +73,9 @@ export class EKS extends Construct {
   }
 
   private createCluster (): {
-    cluster: eks.Cluster;
+    cluster: eks.Cluster
     mastersRole: iam.Role
-    } {
+  } {
     let nodeSubnetType;
     if (this.internetAccess) {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
@@ -211,7 +210,7 @@ export class EKS extends Construct {
         }
       }
     );
-    
+
     return serviceAccount;
   }
 
@@ -235,30 +234,39 @@ export class EKS extends Construct {
   public get cluster (): eks.Cluster {
     return this._cluster;
   }
+
   public get mastersRole (): iam.Role {
     return this._mastersRole;
   }
+
   public get vpc (): ec2.IVpc {
     return this._vpc;
   }
+
   public get internetAccess (): boolean {
     return this._internetAccess;
   }
+
   public get defaultCapacity (): number {
     return this._defaultCapacity;
   }
+
   public get minimumCapacity (): number | undefined {
     return this._minimumCapacity;
   }
+
   public get maximumCapacity (): number | undefined {
     return this._maximumCapacity;
   }
+
   public get instanceType (): InstanceType {
     return this._instanceType;
   }
+
   public get serviceAccount (): eks.ServiceAccount {
     return this._serviceAccount;
   }
+
   public get clusterName (): string | undefined {
     return this._clusterName;
   }

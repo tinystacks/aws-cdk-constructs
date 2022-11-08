@@ -9,8 +9,8 @@ import { Provider } from 'aws-cdk-lib/custom-resources';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 
 export interface EksCleanupProps {
-  vpcId: string;
-  clusterName: string;
+  vpcId: string
+  clusterName: string
 }
 
 export class EksCleanup extends Construct {

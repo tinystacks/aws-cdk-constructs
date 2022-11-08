@@ -9,12 +9,12 @@ import fs from 'fs';
 import path from 'path';
 
 interface VpcPeeringRoutesProps {
-  vpcId: string;
-  peeringConnectionId: string;
-  destinationCidrBlock: string;
-  accountId: string;
-  region: string;
-  uniqueId: string;
+  vpcId: string
+  peeringConnectionId: string
+  destinationCidrBlock: string
+  accountId: string
+  region: string
+  uniqueId: string
 }
 
 export class VpcPeeringRoutes extends Construct {
