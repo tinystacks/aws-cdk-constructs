@@ -23,7 +23,7 @@ export interface VpcProps {
 
 export class VPC extends Construct {
   private readonly _vpc: ec2.IVpc;
-  private readonly subnetConfiguration: Array<{ cidrMask: number, name: string, subnetType: ec2.SubnetType }>
+  private readonly subnetConfiguration: Array<{ cidrMask: number, name: string, subnetType: ec2.SubnetType }>;
   private readonly _cidrBlock: string;
   private readonly cidrBlockMask: number;
   private readonly subnetMask: number;
@@ -213,7 +213,7 @@ export class VPC extends Construct {
         destinationCidrBlock,
         vpcPeeringConnectionId: peeringConnectionId
       });
-    })
+    });
 
     if (this.internetAccess) {
       this.vpc.privateSubnets.forEach((ps, index) => {
@@ -223,7 +223,7 @@ export class VPC extends Construct {
           destinationCidrBlock,
           vpcPeeringConnectionId: peeringConnectionId
         });
-      })
+      });
     }
 
     this.vpc.isolatedSubnets.forEach((ps, index) => {
@@ -233,7 +233,7 @@ export class VPC extends Construct {
         destinationCidrBlock,
         vpcPeeringConnectionId: peeringConnectionId
       });
-    })
+    });
   }
 
   public get vpc (): ec2.IVpc {

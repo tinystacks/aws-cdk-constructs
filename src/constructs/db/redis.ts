@@ -23,7 +23,7 @@ export class Redis extends Construct {
   private replicationGroup: elasticache.CfnReplicationGroup;
   private elasticacheSecret: secretsmanager.Secret;
 
-  public constructor(scope: Construct, id: string, props: RedisCacheProps) {
+  public constructor (scope: Construct, id: string, props: RedisCacheProps) {
     super(scope, id);
     const {
       vpc,
@@ -43,11 +43,11 @@ export class Redis extends Construct {
     this.initRedisCache();
   }
 
-  public initRedisCache(): void {
+  public initRedisCache (): void {
     const redisSecGroup = new ec2.SecurityGroup(
       this, this.id + 'redis-sg', {
-      vpc: this.vpc
-    });
+        vpc: this.vpc
+      });
 
     this.secGroups.forEach((sg: string, index: number) => {
       redisSecGroup.addIngressRule(ec2.SecurityGroup.fromSecurityGroupId(this, `redis-cache-sg-${index}`, sg), ec2.Port.tcp(6379));
@@ -95,15 +95,15 @@ export class Redis extends Construct {
     );
   }
 
-  public get redisEndpoint(): string {
+  public get redisEndpoint (): string {
     return this.replicationGroup.attrPrimaryEndPointAddress;
   }
 
-  public get redisPort(): string {
+  public get redisPort (): string {
     return this.replicationGroup.attrPrimaryEndPointPort;
   }
 
-  public get redisAuthTokenSecretArn(): string {
+  public get redisAuthTokenSecretArn (): string {
     return this.elasticacheSecret.secretArn;
   }
 }

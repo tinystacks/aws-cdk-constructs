@@ -75,7 +75,7 @@ export class EKS extends Construct {
   private createCluster (): {
     cluster: eks.Cluster
     mastersRole: iam.Role
-  } {
+    } {
     let nodeSubnetType;
     if (this.internetAccess) {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
