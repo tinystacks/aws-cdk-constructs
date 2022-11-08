@@ -16,28 +16,28 @@ export interface SubnetTaggingProps {
 }
 
 export class SubnetTagging extends Construct {
-    constructor(scope: Construct, id: string, props: SubnetTaggingProps) {
-        super(scope, id);
+  constructor (scope: Construct, id: string, props: SubnetTaggingProps) {
+    super(scope, id);
 
-        const {
-            ec2ResourceTagsRequest
-        } = props
+    const {
+      ec2ResourceTagsRequest
+    } = props;
 
-        const sdkCall = { // will also be called for a CREATE event
-            service: 'EC2',
-            action: 'createTags',
-            parameters: ec2ResourceTagsRequest,
-            physicalResourceId: PhysicalResourceId.of(id)
-        }
-        const resourcePolicy = AwsCustomResourcePolicy.fromSdkCalls({
-            resources: AwsCustomResourcePolicy.ANY_RESOURCE,
-        })
+    const sdkCall = { // will also be called for a CREATE event
+      service: 'EC2',
+      action: 'createTags',
+      parameters: ec2ResourceTagsRequest,
+      physicalResourceId: PhysicalResourceId.of(id)
+    };
+    const resourcePolicy = AwsCustomResourcePolicy.fromSdkCalls({
+      resources: AwsCustomResourcePolicy.ANY_RESOURCE
+    });
 
-        new AwsCustomResource(this, 'tagResources', {
-            onUpdate: sdkCall,
-            onCreate: sdkCall,
-            policy: resourcePolicy
-        },
-        );
+    new AwsCustomResource(this, 'tagResources', {
+      onUpdate: sdkCall,
+      onCreate: sdkCall,
+      policy: resourcePolicy
     }
+    );
+  }
 }

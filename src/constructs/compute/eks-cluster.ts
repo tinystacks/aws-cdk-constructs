@@ -3,10 +3,9 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
-import { SubnetTagging } from '../networking/tagging'
+import { SubnetTagging } from '../networking/tagging';
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
-import kebabCase from 'lodash.kebabcase';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
@@ -36,7 +35,7 @@ export class EKS extends Construct {
   private readonly _clusterName: string | undefined;
   private readonly _clusterNameSsmParamName: string;
 
-  constructor(scope: Construct, id: string, props: EksProps) {
+  constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
 
     const {
@@ -72,19 +71,19 @@ export class EKS extends Construct {
     this.cluster.node.addDependency(cleanup);
     this.tagSubnets();
     this.createOutputs();
-    this._clusterNameSsmParamName = `${id}-clusterName`
+    this._clusterNameSsmParamName = `${id}-clusterName`;
     //store clustername in ssm
     new ssm.StringParameter(this, `${id}-clusterName-ssm`, {
       parameterName: this._clusterNameSsmParamName,
       stringValue: this._cluster.clusterName
-    })
+    });
     
   }
 
-  private createCluster(): {
+  private createCluster (): {
     cluster: eks.Cluster;
     mastersRole: iam.Role
-  } {
+    } {
     let nodeSubnetType;
     if (this.internetAccess) {
       nodeSubnetType = ec2.SubnetType.PRIVATE_WITH_NAT;
@@ -125,7 +124,7 @@ export class EKS extends Construct {
 
 
 
-  private configureLoadBalancerController() {
+  private configureLoadBalancerController () {
 
     new eks.AlbController(this, 'AlbController', {
       cluster: this._cluster,
@@ -134,7 +133,7 @@ export class EKS extends Construct {
 
   }
 
-  private createOutputs() {
+  private createOutputs () {
     new CfnOutput(this, constructId('cluster', 'name'), {
       description: `${this.id}-cluster-name`,
       value: this.cluster.clusterName
@@ -185,7 +184,7 @@ export class EKS extends Construct {
     // });
   }
 
-  private createTagParams(resources: string[], key: string, value: string) {
+  private createTagParams (resources: string[], key: string, value: string) {
     const params = {
       Resources: resources,
       Tags: [
@@ -194,54 +193,54 @@ export class EKS extends Construct {
           Value: value
         }
       ]
-    }
-    return params
+    };
+    return params;
   }
 
-  private tagSubnets() {
-    let publicSubnets = [];
-    let privateSubnets = [];
+  private tagSubnets () {
+    const publicSubnets = [];
+    const privateSubnets = [];
     for (const subnet of this._vpc.publicSubnets) {
-      publicSubnets.push(subnet.subnetId)
+      publicSubnets.push(subnet.subnetId);
     }
     for (const subnet of this._vpc.privateSubnets) {
-      privateSubnets.push(subnet.subnetId)
+      privateSubnets.push(subnet.subnetId);
     }
-    const publicTagRequestParams = this.createTagParams(publicSubnets, "kubernetes.io/role/elb", "1")
-    const privateTagRequestParams = this.createTagParams(publicSubnets, "kubernetes.io/role/internal-elb", "1")
+    const publicTagRequestParams = this.createTagParams(publicSubnets, 'kubernetes.io/role/elb', '1');
+    const privateTagRequestParams = this.createTagParams(publicSubnets, 'kubernetes.io/role/internal-elb', '1');
 
-    new SubnetTagging(this, "tagPublicSubnets", { ec2ResourceTagsRequest: publicTagRequestParams });
-    new SubnetTagging(this, "tagPrivateSubnets", { ec2ResourceTagsRequest: privateTagRequestParams });
+    new SubnetTagging(this, 'tagPublicSubnets', { ec2ResourceTagsRequest: publicTagRequestParams });
+    new SubnetTagging(this, 'tagPrivateSubnets', { ec2ResourceTagsRequest: privateTagRequestParams });
   }
 
-  public get cluster(): eks.Cluster {
+  public get cluster (): eks.Cluster {
     return this._cluster;
   }
-  public get mastersRole(): iam.Role {
+  public get mastersRole (): iam.Role {
     return this._mastersRole;
   }
-  public get vpc(): ec2.IVpc {
+  public get vpc (): ec2.IVpc {
     return this._vpc;
   }
-  public get internetAccess(): boolean {
+  public get internetAccess (): boolean {
     return this._internetAccess;
   }
-  public get defaultCapacity(): number {
+  public get defaultCapacity (): number {
     return this._defaultCapacity;
   }
-  public get minimumCapacity(): number | undefined {
+  public get minimumCapacity (): number | undefined {
     return this._minimumCapacity;
   }
-  public get maximumCapacity(): number | undefined {
+  public get maximumCapacity (): number | undefined {
     return this._maximumCapacity;
   }
-  public get instanceType(): InstanceType {
+  public get instanceType (): InstanceType {
     return this._instanceType;
   }
-  public get clusterName(): string | undefined {
+  public get clusterName (): string | undefined {
     return this._clusterName;
   }
-  public get clusterNameParameterName(): string {
-    return this._clusterNameSsmParamName
+  public get clusterNameParameterName (): string {
+    return this._clusterNameSsmParamName;
   }
 }
