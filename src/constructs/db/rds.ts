@@ -5,11 +5,14 @@ import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
 
 export interface RdsProps {
-  vpc: ec2.Vpc;
+  vpc: ec2.IVpc;
   securityGroupsList: ec2.SecurityGroup[];
   instanceType: ec2.InstanceType;
   subnetType: ec2.SubnetType;
-  databaseName: string;
+  databaseName?: string;
+  databaseUsername?: string;
+  databaseEngine?: any;
+  databasePort?: number;
   instanceIdentifier: string;
   storageSize?: number;
   dbArn?: string;
@@ -19,14 +22,26 @@ export interface RdsProps {
 export class Rds extends Construct {
 
   readonly RdsInstance: rds.DatabaseInstance;
+  readonly _databaseName: string;
+  readonly _databaseUsername: string;
 
   constructor (scope: Construct, id: string, props: RdsProps) {
     super(scope, id);
 
+    const {
+      databasePort = 5432,
+      databaseEngine = rds.DatabaseInstanceEngine.POSTGRES,
+      databaseName = 'tstesting',
+      databaseUsername = 'postgres'
+    } = props;
+
+    this._databaseName = databaseName;
+    this._databaseUsername = databaseUsername;
+
     if (!props.isImported|| !props.dbArn) {
 
       this.RdsInstance = new rds.DatabaseInstance(this, constructId('rds', 'instance'), {
-        engine: rds.DatabaseInstanceEngine.POSTGRES,
+        engine: databaseEngine,
         vpc: props.vpc,
         vpcSubnets: {
           subnetType: props.subnetType
@@ -37,13 +52,21 @@ export class Rds extends Construct {
         allowMajorVersionUpgrade: true,
         instanceIdentifier: props.instanceIdentifier,
 
-        databaseName: props.databaseName,
-        port: 5432,
+        databaseName: this._databaseName,
+        port: databasePort,
         securityGroups: props.securityGroupsList
       });
 
-      new cdk.CfnOutput(this, 'postgres-secret', {
-        value: `${props.instanceIdentifier}-postgres-secret:${this.RdsInstance.secret?.secretArn}`
+      new cdk.CfnOutput(this, 'db-secret', {
+        value: `${props.instanceIdentifier}-db-secret:${this.RdsInstance.secret?.secretArn}`
+      });
+
+      new cdk.CfnOutput(this, 'db-endpoint-port', {
+        value: `${this.RdsInstance.dbInstanceEndpointAddress}:${this.RdsInstance.dbInstanceEndpointPort}`
+      });
+
+      new cdk.CfnOutput(this, 'db-name', {
+        value: `${this._databaseName}`
       });
 
       const dbSecretArnOutputId = Rds.OutputDescriptions.secretArn(props.instanceIdentifier);
@@ -59,7 +82,7 @@ export class Rds extends Construct {
         instanceIdentifier: identifier,
         instanceEndpointAddress: '',
         securityGroups: props.securityGroupsList,
-        port: 5432
+        port: databasePort
       }) as rds.DatabaseInstance;
 
     }
@@ -74,8 +97,12 @@ export class Rds extends Construct {
     return this.RdsInstance;
   }
 
-  public get instanceIdentifier (): string {
-    return this.RdsInstance.instanceIdentifier;
+  public get dbName () {
+    return this._databaseName;
+  }
+
+  public get dbUsername () {
+    return this._databaseUsername;
   }
 
   static OutputDescriptions: {

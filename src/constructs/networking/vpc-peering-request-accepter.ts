@@ -2,10 +2,10 @@ import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourc
 import { Construct } from 'constructs';
 
 export interface VpcPeeringRequestAccepterProps {
-  peeringConnectionId: string;
-  vpcArn: string;
-  accountId: string;
-  region: string;
+  peeringConnectionId: string
+  vpcArn: string
+  accountId: string
+  region: string
 }
 
 export class VpcPeeringRequestAccepter extends AwsCustomResource {
