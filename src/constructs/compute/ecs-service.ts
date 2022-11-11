@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
+import { Secret } from 'aws-cdk-lib/aws-ecs';
 
 export interface EcsServiceProps {
   containerName: string;
@@ -18,6 +19,7 @@ export interface EcsServiceProps {
   ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
+  secrets?: { [key: string]: Secret; }
 }
 
 export class EcsService extends Construct {
@@ -51,7 +53,8 @@ export class EcsService extends Construct {
       image: ecs.RepositoryImage.fromRegistry(props.containerImage),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
-      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName })
+      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }), 
+      secrets: props.secrets
     });
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
