@@ -43,7 +43,7 @@ export class EcsService extends Construct {
       cpu: String(props.cpu),
       memoryMiB: String(props.memoryLimitMiB),
       networkMode: ecs.NetworkMode.AWS_VPC,
-      taskRole: ecsTaskRole,
+      taskRole: ecsTaskRole
     });
 
     const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
