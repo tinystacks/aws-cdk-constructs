@@ -43,7 +43,7 @@ export class EcsService extends Construct {
       cpu: String(props.cpu),
       memoryMiB: String(props.memoryLimitMiB),
       networkMode: ecs.NetworkMode.AWS_VPC,
-      taskRole: ecsTaskRole
+      taskRole: ecsTaskRole,
     });
 
     const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
@@ -51,7 +51,8 @@ export class EcsService extends Construct {
       image: ecs.RepositoryImage.fromRegistry(props.containerImage),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
-      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName })
+      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
+      privileged: true
     });
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
@@ -61,7 +62,8 @@ export class EcsService extends Construct {
       desiredCount: props.desiredCount,
       taskDefinition: ecsTaskDefinition,
       securityGroups: [props.ecsSecurityGroup],
-      assignPublicIp: true
+      assignPublicIp: true,
+      enableExecuteCommand: true
     });
 
     ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
