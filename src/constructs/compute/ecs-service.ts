@@ -16,7 +16,7 @@ export interface EcsServiceProps {
   applicationPort: number;
   ecsSecurityGroup: ec2.SecurityGroup;
   ecsIamPolicyStatements: iam.PolicyStatement[];
-  albTargetGroup: elbv2.ApplicationTargetGroup;
+  albTargetGroup?: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
 }
 
@@ -66,8 +66,9 @@ export class EcsService extends Construct {
       enableExecuteCommand: true
     });
 
-    ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
-  
+    if (props.albTargetGroup) {
+      ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
+    }
   }
 
 }
