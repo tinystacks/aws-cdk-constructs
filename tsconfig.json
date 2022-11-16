@@ -27,5 +27,5 @@
   },
   "include": [
     "src"
-, "bin/stacks/examples/40n/stitcher-stack.ts"  ]
+  ]
 }
