@@ -19,6 +19,7 @@ export interface EcsServiceProps {
   ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup?: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
+  command?: string[];
 }
 
 export class EcsService extends Construct {
@@ -55,6 +56,7 @@ export class EcsService extends Construct {
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
       logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
+      command: props.command
     });
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
