@@ -53,7 +53,7 @@ export class EcsService extends Construct {
 
     const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
       containerName: props.containerName,
-      image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage),
+      image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage || ''),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
       logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
