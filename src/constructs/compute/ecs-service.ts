@@ -10,8 +10,8 @@ export interface EcsServiceProps {
   containerName: string;
   vpc: ec2.IVpc;
   ecsCluster: ecs.Cluster;
-  containerImage: string;
-  repositoryImage?: ecs.RepositoryImage;
+  containerImage?: string;
+  repositoryImage?: ecs.ContainerImage;
   memoryLimitMiB: number;
   cpu: number;
   desiredCount: number;
