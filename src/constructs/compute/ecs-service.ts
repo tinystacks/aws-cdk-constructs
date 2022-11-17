@@ -21,7 +21,7 @@ export interface EcsServiceProps {
 }
 
 export class EcsService extends Construct {
-
+  private ecsService: ecs.FargateService;
   constructor (scope: Construct, id: string, props: EcsServiceProps) {
     super (scope, id);
 
@@ -57,7 +57,7 @@ export class EcsService extends Construct {
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
 
-    const ecsService = new ecs.FargateService(this, constructId('ecs', 'FargfateService'), {
+    this.ecsService = new ecs.FargateService(this, constructId('ecs', 'FargfateService'), {
       cluster: props.ecsCluster,
       desiredCount: props.desiredCount,
       taskDefinition: ecsTaskDefinition,
@@ -67,8 +67,12 @@ export class EcsService extends Construct {
     });
 
     if (props.albTargetGroup) {
-      ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
+      this.ecsService.attachToApplicationTargetGroup(props.albTargetGroup);
     }
+  }
+
+  public service () {
+    return this.ecsService;
   }
 
 }
