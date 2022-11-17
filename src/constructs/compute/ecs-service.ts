@@ -11,6 +11,7 @@ export interface EcsServiceProps {
   vpc: ec2.IVpc;
   ecsCluster: ecs.Cluster;
   containerImage: string;
+  repositoryImage?: ecs.RepositoryImage;
   memoryLimitMiB: number;
   cpu: number;
   desiredCount: number;
@@ -52,7 +53,7 @@ export class EcsService extends Construct {
 
     const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
       containerName: props.containerName,
-      image: ecs.RepositoryImage.fromRegistry(props.containerImage),
+      image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
       logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
