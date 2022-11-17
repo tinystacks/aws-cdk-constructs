@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
+import { isEmpty } from 'lodash';
 
 export interface EcsServiceProps {
   containerName: string;
@@ -31,11 +32,14 @@ export class EcsService extends Construct {
       description: 'Role that the api task definitions use'
     });
 
-    ecsTaskRole.attachInlinePolicy(
-      new iam.Policy(this, constructId('ecs', 'TaskPolicy'), {
-        statements: props.ecsIamPolicyStatements
-      })
-    );
+    if (!isEmpty(props.ecsIamPolicyStatements)) {
+      ecsTaskRole.attachInlinePolicy(
+        new iam.Policy(this, constructId('ecs', 'TaskPolicy'), {
+          statements: props.ecsIamPolicyStatements
+        })
+      );
+    }
+    
 
     const ecsTaskDefinition = new ecs.TaskDefinition(this, constructId('ecs', 'TaskDefinition'), {
       family: 'task',
