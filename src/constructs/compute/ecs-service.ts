@@ -28,7 +28,6 @@ export class EcsService extends Construct {
 
     const ecsTaskRole = new iam.Role(this, constructId('ecs', 'TaskRole'), {
       assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      roleName: 'ecs-task-role',
       description: 'Role that the api task definitions use'
     });
 
