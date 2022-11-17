@@ -55,7 +55,6 @@ export class EcsService extends Construct {
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
       logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
-      privileged: true
     });
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
