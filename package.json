@@ -1,6 +1,6 @@
 {
   "name": "@tinystacks/aws-cdk-constructs",
-  "version": "0.13.4",
+  "version": "0.13.5",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
   "main": "dist/index.js",
   "scope": "@tinystacks",
