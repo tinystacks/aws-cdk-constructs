@@ -4,11 +4,10 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import kebabCase from 'lodash.kebabcase';
 import { SubnetTagging } from '../networking/tagging';
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
-import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
+import { InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 
 export interface EksProps {
