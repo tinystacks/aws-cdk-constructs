@@ -3,12 +3,13 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import kebabCase from 'lodash.kebabcase';
 import { SubnetTagging } from '../networking/tagging';
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
 
 export interface EksProps {
   vpc: ec2.IVpc;
@@ -16,8 +17,7 @@ export interface EksProps {
   defaultCapacity?: number;
   minimumCapacity?: number;
   maximumCapacity?: number;
-  instanceClass?: InstanceClass;
-  instanceSize?: InstanceSize;
+  instanceType?: InstanceType;
   clusterName?: string;
 }
 
@@ -44,8 +44,7 @@ export class EKS extends Construct {
       defaultCapacity = 0,
       minimumCapacity,
       maximumCapacity,
-      instanceClass = InstanceClass.BURSTABLE3,
-      instanceSize = InstanceSize.MEDIUM,
+      instanceType = new ec2.InstanceType('t3.micro'),
       clusterName = `c-${new Date().getTime()}`
     } = props;
 
@@ -55,12 +54,13 @@ export class EKS extends Construct {
     this._defaultCapacity = defaultCapacity;
     this._minimumCapacity = minimumCapacity;
     this._maximumCapacity = maximumCapacity;
-    this._instanceType = InstanceType.of(instanceClass, instanceSize);
+    this._instanceType = instanceType;
     this._clusterName = clusterName;
     const {
       cluster,
       mastersRole
     } = this.createCluster();
+
     this._cluster = cluster;
     this._mastersRole = mastersRole;
     this.configureLoadBalancerController();
@@ -81,7 +81,7 @@ export class EKS extends Construct {
   }
 
   private createCluster (): {
-    cluster: eks.Cluster;
+    cluster: eks.Cluster
     mastersRole: iam.Role
     } {
     let nodeSubnetType;
@@ -120,9 +120,6 @@ export class EKS extends Construct {
     });
     return { cluster, mastersRole };
   }
-
-
-
 
   private configureLoadBalancerController () {
 
@@ -216,27 +213,39 @@ export class EKS extends Construct {
   public get cluster (): eks.Cluster {
     return this._cluster;
   }
+
   public get mastersRole (): iam.Role {
     return this._mastersRole;
   }
+
   public get vpc (): ec2.IVpc {
     return this._vpc;
   }
+
   public get internetAccess (): boolean {
     return this._internetAccess;
   }
+
   public get defaultCapacity (): number {
     return this._defaultCapacity;
   }
+
   public get minimumCapacity (): number | undefined {
     return this._minimumCapacity;
   }
+
   public get maximumCapacity (): number | undefined {
     return this._maximumCapacity;
   }
+
   public get instanceType (): InstanceType {
     return this._instanceType;
   }
+
+  public get serviceAccount (): eks.ServiceAccount {
+    return this._serviceAccount;
+  }
+
   public get clusterName (): string | undefined {
     return this._clusterName;
   }

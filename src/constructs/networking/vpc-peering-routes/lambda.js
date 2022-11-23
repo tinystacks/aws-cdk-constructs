@@ -1,4 +1,4 @@
-/*eslint-env node*/
+/* eslint-env node */
 const AWS = require('aws-sdk');
 const response = require('cfn-response');
 
@@ -32,7 +32,7 @@ async function getVpcRouteTables (vpcId, region) {
   );
   const privateRouteTables = routeTables.filter(routeTable =>
     !routeTable.Associations.some(association => association.Main === true) &&
-    routeTable.Routes.some(route => 
+    routeTable.Routes.some(route =>
       route.DestinationCidrBlock === '0.0.0.0/0' &&
       (
         (
@@ -49,7 +49,7 @@ async function getVpcRouteTables (vpcId, region) {
 
   const publicRouteTableIds = publicRouteTables.map(routeTable => routeTable.RouteTableId);
   const privateRouteTableIds = privateRouteTables.map(routeTable => routeTable.RouteTableId);
-  const isolatedRouteTables = routeTables.filter(routeTable => 
+  const isolatedRouteTables = routeTables.filter(routeTable =>
     !routeTable.Associations.some(association => association.Main === true) &&
     !publicRouteTableIds.includes(routeTable.RouteTableId) &&
     !privateRouteTableIds.includes(routeTable.RouteTableId)
@@ -67,7 +67,7 @@ async function upsertRoute (routeTable, destinationCidrBlock, peeringConnectionI
     region
   });
 
-  const existingRoute = routeTable.Routes.find(route => 
+  const existingRoute = routeTable.Routes.find(route =>
     route.DestinationCidrBlock === destinationCidrBlock
   );
 
@@ -97,7 +97,6 @@ async function upsertRoute (routeTable, destinationCidrBlock, peeringConnectionI
     console.info(`Route to ${destinationCidrBlock} for peering connection ${peeringConnectionId} already exists on route table ${routeTable.RouteTableId}!`);
     console.info('Skipping route creation...');
   }
-  return;
 }
 
 async function upsertPeeringRoutes (vpcId, peeringConnectionId, destinationCidrBlock, region) {
@@ -106,11 +105,11 @@ async function upsertPeeringRoutes (vpcId, peeringConnectionId, destinationCidrB
     privateRouteTables,
     isolatedRouteTables
   } = await getVpcRouteTables(vpcId, region);
-  
+
   for (const publicRouteTable of publicRouteTables) {
     await upsertRoute(publicRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
-  
+
   for (const privateRouteTable of privateRouteTables) {
     await upsertRoute(privateRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
@@ -118,7 +117,6 @@ async function upsertPeeringRoutes (vpcId, peeringConnectionId, destinationCidrB
   for (const isolatedRouteTable of isolatedRouteTables) {
     await upsertRoute(isolatedRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
-  return;
 }
 
 async function deleteRoute (routeTable, destinationCidrBlock, peeringConnectionId, region) {
@@ -126,7 +124,7 @@ async function deleteRoute (routeTable, destinationCidrBlock, peeringConnectionI
     region
   });
 
-  const existingRoute = routeTable.Routes.find(route => 
+  const existingRoute = routeTable.Routes.find(route =>
     route.DestinationCidrBlock === destinationCidrBlock
   );
 
@@ -143,7 +141,6 @@ async function deleteRoute (routeTable, destinationCidrBlock, peeringConnectionI
       throw error;
     });
   }
-  return;
 }
 
 async function deletePeeringRoutes (vpcId, peeringConnectionId, destinationCidrBlock, region) {
@@ -152,11 +149,11 @@ async function deletePeeringRoutes (vpcId, peeringConnectionId, destinationCidrB
     privateRouteTables,
     isolatedRouteTables
   } = await getVpcRouteTables(vpcId, region);
-  
+
   for (const publicRouteTable of publicRouteTables) {
     await deleteRoute(publicRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
-  
+
   for (const privateRouteTable of privateRouteTables) {
     await deleteRoute(privateRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
@@ -164,12 +161,10 @@ async function deletePeeringRoutes (vpcId, peeringConnectionId, destinationCidrB
   for (const isolatedRouteTable of isolatedRouteTables) {
     await deleteRoute(isolatedRouteTable, destinationCidrBlock, peeringConnectionId, region);
   }
-  return;
 }
 
 async function responseSuccess (event, context) {
   response.send(event, context, response.SUCCESS);
-  return;
 }
 
 async function handler (event, context) {

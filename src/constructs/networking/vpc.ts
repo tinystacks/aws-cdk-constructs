@@ -8,32 +8,32 @@ import { VpcPeeringRequestAccepter } from './vpc-peering-request-accepter';
 import { VpcPeeringRoutes } from './vpc-peering-routes';
 
 interface ExternalVpcPeer {
-  vpcId: string;
-  cidrBlock: string;
-  accountId?: string;
-  region?: string;
+  vpcId: string
+  cidrBlock: string
+  accountId?: string
+  region?: string
 }
 
 export interface VpcProps {
-    cidrBlock?: string;
-    internetAccess: boolean;
-    internalPeers?: VPC[];
-    externalPeers?: ExternalVpcPeer[];
+  cidrBlock?: string
+  internetAccess: boolean
+  internalPeers?: VPC[]
+  externalPeers?: ExternalVpcPeer[]
 }
 
 export class VPC extends Construct {
   private readonly _vpc: ec2.IVpc;
-  private subnetConfiguration: { cidrMask: number; name: string; subnetType: ec2.SubnetType; }[];
+  private readonly subnetConfiguration: Array<{ cidrMask: number, name: string, subnetType: ec2.SubnetType }>;
   private readonly _cidrBlock: string;
-  private cidrBlockMask: number;
-  private subnetMask: number;
-  private internetAccess: boolean;
-  private accountId: string;
-  private region: string;
-    
+  private readonly cidrBlockMask: number;
+  private readonly subnetMask: number;
+  private readonly internetAccess: boolean;
+  private readonly accountId: string;
+  private readonly region: string;
+
   constructor (scope: Construct, id: string, props: VpcProps) {
     super(scope, id);
-    
+
     const {
       cidrBlock,
       internetAccess,
@@ -42,7 +42,7 @@ export class VPC extends Construct {
     } = props;
 
     this.internetAccess = internetAccess;
-    
+
     this.accountId = Stack.of(this).account;
     this.region = Stack.of(this).region;
 
@@ -77,7 +77,7 @@ export class VPC extends Construct {
       subnetType: ec2.SubnetType.PUBLIC
     };
     this.subnetConfiguration.push(publicSubnetConfig);
-    
+
     const isolatedSubnetConfig = {
       cidrMask: this.subnetMask,
       name: 'IsolatedSubnet',
@@ -95,7 +95,7 @@ export class VPC extends Construct {
       value: this.vpc.vpcId
     });
 
-    if (internalPeers) {
+    if (internalPeers != null) {
       for (const internalPeer of internalPeers) {
         const connectionId = `${this.vpc.vpcId}-to-${internalPeer.vpc.vpcId}`;
         const peeringConnectionRequest = this.requestPeeringConnection(internalPeer, connectionId);
@@ -103,7 +103,7 @@ export class VPC extends Construct {
         internalPeer.acceptPeeringConnection(this, peeringConnectionId, connectionId);
       }
     }
-    if (externalPeers) {
+    if (externalPeers != null) {
       for (const externalPeer of externalPeers) {
         const connectionId = `${this.vpc.vpcId}-to-${externalPeer.vpcId}`;
         const peeringConnectionRequest = this.requestExternalPeeringConnection(externalPeer, connectionId);
@@ -141,14 +141,14 @@ export class VPC extends Construct {
   public acceptPeeringConnection (requester: VPC, peeringConnectionId: string, connectionId: string) {
     this.addPeeringRoutes(peeringConnectionId, requester.cidrBlock, connectionId);
     new VpcPeerDnsResolution(this, constructId(`accepter-dns-resolution-${connectionId}`), {
-      peeringConnectionId: peeringConnectionId,
+      peeringConnectionId,
       vpcArn: this.vpc.vpcArn,
       accountId: this.accountId,
       region: this.region,
       isAccepter: true
     });
   }
-  
+
   public requestExternalPeeringConnection (peer: ExternalVpcPeer, connectionId: string) {
     if (this.cidrBlock === peer.cidrBlock) {
       throw new Error('Cannot peer two vpcs with the same cidr block!');
@@ -172,8 +172,8 @@ export class VPC extends Construct {
     });
     return peeringConnectionRequest;
   }
-  
-  public acceptExternalPeeringConnection (peer: ExternalVpcPeer, peeringConnectionId: string, connectionId: string) {    
+
+  public acceptExternalPeeringConnection (peer: ExternalVpcPeer, peeringConnectionId: string, connectionId: string) {
     const {
       accountId = this.accountId,
       region = this.region,
@@ -184,7 +184,7 @@ export class VPC extends Construct {
 
     new VpcPeeringRequestAccepter(this, constructId('PeeringRequestAccepter', connectionId), {
       vpcArn: externalVpcArn,
-      peeringConnectionId: peeringConnectionId,
+      peeringConnectionId,
       accountId,
       region
     });
@@ -197,7 +197,7 @@ export class VPC extends Construct {
       uniqueId: randomUUID()
     });
     new VpcPeerDnsResolution(this, constructId(`accepter-dns-resolution-${connectionId}`), {
-      peeringConnectionId: peeringConnectionId,
+      peeringConnectionId,
       vpcArn: externalVpcArn,
       accountId,
       region,
@@ -239,6 +239,7 @@ export class VPC extends Construct {
   public get vpc (): ec2.IVpc {
     return this._vpc;
   }
+
   public get cidrBlock (): string {
     return this._cidrBlock;
   }

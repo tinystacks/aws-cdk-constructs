@@ -1,6 +1,6 @@
 {
   "name": "@tinystacks/aws-cdk-constructs",
-  "version": "0.5.0",
+  "version": "0.13.4",
   "description": "Modularized cdk constructs for use in building tailored stacks.",
   "main": "dist/index.js",
   "scope": "@tinystacks",
@@ -42,7 +42,7 @@
   "devDependencies": {
     "@types/jest": "^28.1.6",
     "@types/lodash.kebabcase": "^4.1.7",
-    "@types/node": "^18.7.2",
+    "@types/node": "^18.11.0",
     "@typescript-eslint/eslint-plugin": "^5.33.0",
     "@typescript-eslint/parser": "^5.33.0",
     "aws-cdk": "^2.37.1",
