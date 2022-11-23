@@ -6,18 +6,17 @@ import * as cdk from 'aws-cdk-lib';
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
 import kebabCase from 'lodash.kebabcase';
-import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
+import { InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 
 export interface EksProps {
-  vpc: ec2.IVpc
-  internetAccess: boolean
-  defaultCapacity?: number
-  minimumCapacity?: number
-  maximumCapacity?: number
-  instanceClass?: InstanceClass
-  instanceSize?: InstanceSize
-  clusterName?: string
+  vpc: ec2.IVpc;
+  internetAccess: boolean;
+  defaultCapacity?: number;
+  minimumCapacity?: number;
+  maximumCapacity?: number;
+  instanceType?: InstanceType;
+  clusterName?: string;
 }
 
 export class EKS extends Construct {
@@ -42,8 +41,7 @@ export class EKS extends Construct {
       defaultCapacity = 0,
       minimumCapacity,
       maximumCapacity,
-      instanceClass = InstanceClass.BURSTABLE3,
-      instanceSize = InstanceSize.MEDIUM,
+      instanceType = new ec2.InstanceType('t3.micro'),
       clusterName = `c-${new Date().getTime()}`
     } = props;
 
@@ -53,7 +51,7 @@ export class EKS extends Construct {
     this._defaultCapacity = defaultCapacity;
     this._minimumCapacity = minimumCapacity;
     this._maximumCapacity = maximumCapacity;
-    this._instanceType = InstanceType.of(instanceClass, instanceSize);
+    this._instanceType = instanceType;
     this._clusterName = clusterName;
     const {
       cluster,
