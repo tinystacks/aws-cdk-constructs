@@ -3,10 +3,12 @@ import * as eks from 'aws-cdk-lib/aws-eks';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as cdk from 'aws-cdk-lib';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
+import kebabCase from 'lodash.kebabcase';
+import { SubnetTagging } from '../networking/tagging';
 import { constructId } from '@tinystacks/iac-utils';
 import { CfnOutput } from 'aws-cdk-lib';
-import kebabCase from 'lodash.kebabcase';
-import { InstanceType } from 'aws-cdk-lib/aws-ec2';
+import { InstanceClass, InstanceSize, InstanceType } from 'aws-cdk-lib/aws-ec2';
 import { EksCleanup } from './eks-cleanup';
 
 export interface EksProps {
@@ -31,6 +33,7 @@ export class EKS extends Construct {
   private readonly _mastersRole: iam.Role;
   private readonly _serviceAccount: eks.ServiceAccount;
   private readonly _clusterName: string | undefined;
+  private readonly _clusterNameSsmParamName: string;
 
   constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
@@ -60,7 +63,7 @@ export class EKS extends Construct {
 
     this._cluster = cluster;
     this._mastersRole = mastersRole;
-    this._serviceAccount = this.configureLoadBalancerController();
+    this.configureLoadBalancerController();
     const cleanup = new EksCleanup(this, constructId('EksCleanup'), {
       vpcId: this.vpc.vpcId,
       clusterName
@@ -68,6 +71,13 @@ export class EKS extends Construct {
     this.cluster.node.addDependency(cleanup);
     this.tagSubnets();
     this.createOutputs();
+    this._clusterNameSsmParamName = `${id}-clusterName`;
+    //store clustername in ssm
+    new ssm.StringParameter(this, `${id}-clusterName-ssm`, {
+      parameterName: this._clusterNameSsmParamName,
+      stringValue: this._cluster.clusterName
+    });
+    
   }
 
   private createCluster (): {
@@ -108,125 +118,96 @@ export class EKS extends Construct {
         subnetType: nodeSubnetType
       }
     });
-
     return { cluster, mastersRole };
   }
 
-  private configureLoadBalancerController (): eks.ServiceAccount {
-    const loadBalancerServiceAccountName = 'aws-load-balancer-controller';
-    const serviceAccount = this.cluster.addServiceAccount(constructId('lb', 'serviceAccount'), {
-      name: loadBalancerServiceAccountName,
-      namespace: 'default'
+  private configureLoadBalancerController () {
+
+    new eks.AlbController(this, 'AlbController', {
+      cluster: this._cluster,
+      version: eks.AlbControllerVersion.V2_4_1
     });
-    serviceAccount.addToPrincipalPolicy(
-      new iam.PolicyStatement({
-        resources: ['*'],
-        actions: [
-          'elasticloadbalancing:CreateListener',
-          'elasticloadbalancing:CreateTargetGroup',
-          'elasticloadbalancing:DeleteListener',
-          'elasticloadbalancing:CreateLoadBalancer',
-          'elasticloadbalancing:CreateRule',
-          'elasticloadbalancing:DeleteRule',
-          'iam:CreateServiceLinkedRole',
-          'ec2:AuthorizeSecurityGroupIngress',
-          'ec2:RevokeSecurityGroupIngress',
-          'ec2:CreateSecurityGroup',
-          'cognito-idp:DescribeUserPoolClient',
-          'acm:ListCertificates',
-          'acm:DescribeCertificate',
-          'iam:ListServerCertificates',
-          'iam:GetServerCertificate',
-          'waf-regional:GetWebACL',
-          'waf-regional:GetWebACLForResource',
-          'waf-regional:AssociateWebACL',
-          'waf-regional:DisassociateWebACL',
-          'wafv2:GetWebACL',
-          'wafv2:GetWebACLForResource',
-          'wafv2:AssociateWebACL',
-          'wafv2:DisassociateWebACL',
-          'shield:GetSubscriptionState',
-          'shield:DescribeProtection',
-          'shield:CreateProtection',
-          'shield:DeleteProtection',
-          'ec2:DescribeAccountAttributes',
-          'ec2:DescribeAddresses',
-          'ec2:DescribeAvailabilityZones',
-          'ec2:DescribeInternetGateways',
-          'ec2:DescribeVpcs',
-          'ec2:DescribeVpcPeeringConnections',
-          'ec2:DescribeSubnets',
-          'ec2:DescribeSecurityGroups',
-          'ec2:DescribeInstances',
-          'ec2:DescribeNetworkInterfaces',
-          'ec2:DescribeTags',
-          'ec2:CreateTags',
-          'ec2:GetCoipPoolUsage',
-          'ec2:DescribeCoipPools',
-          'elasticloadbalancing:DescribeLoadBalancers',
-          'elasticloadbalancing:DescribeLoadBalancerAttributes',
-          'elasticloadbalancing:DescribeListeners',
-          'elasticloadbalancing:DescribeListenerCertificates',
-          'elasticloadbalancing:DescribeSSLPolicies',
-          'elasticloadbalancing:DescribeRules',
-          'elasticloadbalancing:DescribeTargetGroups',
-          'elasticloadbalancing:DescribeTargetGroupAttributes',
-          'elasticloadbalancing:DescribeTargetHealth',
-          'elasticloadbalancing:DescribeTags',
-          'elasticloadbalancing:SetWebAcl',
-          'elasticloadbalancing:ModifyListener',
-          'elasticloadbalancing:AddListenerCertificates',
-          'elasticloadbalancing:RemoveListenerCertificates',
-          'elasticloadbalancing:ModifyRule',
-          'elasticloadbalancing:DeleteTargetGroup',
-          'elasticloadbalancing:DeregisterTargets',
-          'elasticloadbalancing:ModifyTargetGroupAttributes',
-          'elasticloadbalancing:RegisterTargets'
-        ],
-        effect: iam.Effect.ALLOW
-      })
-    );
 
-    this.cluster.addHelmChart(
-      constructId('lb', 'helm'),
-      {
-        chart: 'aws-load-balancer-controller',
-        repository: 'https://aws.github.io/eks-charts',
-        namespace: 'default',
-        release: kebabCase(`${this.id}-lb`), // was throwing if it contained the TitleCase id.
-        version: '1.4.3',
-        values: {
-          deploymentAnnotations: {
-            'service.beta.kubernetes.io/aws-load-balancer-scheme': 'internet-facing'
-          },
-          clusterName: this.cluster.clusterName,
-          vpcId: this.vpc.vpcId,
-          serviceAccount: {
-            create: false,
-            name: loadBalancerServiceAccountName
-          }
-        }
-      }
-    );
-
-    return serviceAccount;
-  }
-
-  private tagSubnets () {
-    for (const subnet of this.vpc.privateSubnets) {
-      const importedSubnet = ec2.Subnet.fromSubnetId(this, `${subnet.subnetId}`, subnet.subnetId);
-      cdk.Tags.of(importedSubnet).add(
-        'kubernetes.io/role/internal-elb',
-        '1'
-      );
-    }
   }
 
   private createOutputs () {
+    new CfnOutput(this, constructId('cluster', 'name'), {
+      description: `${this.id}-cluster-name`,
+      value: this.cluster.clusterName
+    });
     new CfnOutput(this, constructId('cluster', 'arn'), {
       description: `${this.id}-cluster-arn`,
       value: this.cluster.clusterArn
     });
+    new CfnOutput(this, constructId('cluster', 'role', 'name'), {
+      description: `${this.id}-cluster-role-name`,
+      value: this.cluster.role.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'role', 'arn'), {
+      description: `${this.id}-cluster-role-arn`,
+      value: this.cluster.role.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'name'), {
+      description: `${this.id}-cluster-admin-role-name`,
+      value: this.cluster.adminRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'admin', 'role', 'arn'), {
+      description: `${this.id}-cluster-admin-role-arn`,
+      value: this.cluster.adminRole.roleArn
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'name'), {
+      description: `${this.id}-cluster-kubectl-role-name`,
+      value: this.cluster.kubectlRole?.roleName || ''
+    });
+    new CfnOutput(this, constructId('cluster', 'kubectl', 'role', 'arn'), {
+      description: `${this.id}-cluster-kubectl-role-arn`,
+      value: this.cluster.kubectlRole?.roleArn || ''
+    });
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'name'), {
+      description: `${this.id}-cluster-masters-role-name`,
+      value: this.mastersRole.roleName
+    });
+    new CfnOutput(this, constructId('cluster', 'masters', 'role', 'arn'), {
+      description: `${this.id}-cluster-masters-role-arn`,
+      value: this.mastersRole.roleArn
+    });
+    // new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'name'), {
+    //   description: `${this.id}-eks-cluster-service-account-role-name`,
+    //   value: this.serviceAccount.role.roleName
+    // });
+    // new CfnOutput(this, constructId('eks', 'cluster', 'service', 'account', 'role', 'arn'), {
+    //   description: `${this.id}-eks-cluster-service-account-role-arn`,
+    //   value: this.serviceAccount.role.roleArn
+    // });
+  }
+
+  private createTagParams (resources: string[], key: string, value: string) {
+    const params = {
+      Resources: resources,
+      Tags: [
+        {
+          Key: key,
+          Value: value
+        }
+      ]
+    };
+    return params;
+  }
+
+  private tagSubnets () {
+    const publicSubnets = [];
+    const privateSubnets = [];
+    for (const subnet of this._vpc.publicSubnets) {
+      publicSubnets.push(subnet.subnetId);
+    }
+    for (const subnet of this._vpc.privateSubnets) {
+      privateSubnets.push(subnet.subnetId);
+    }
+    const publicTagRequestParams = this.createTagParams(publicSubnets, 'kubernetes.io/role/elb', '1');
+    const privateTagRequestParams = this.createTagParams(publicSubnets, 'kubernetes.io/role/internal-elb', '1');
+
+    new SubnetTagging(this, 'tagPublicSubnets', { ec2ResourceTagsRequest: publicTagRequestParams });
+    new SubnetTagging(this, 'tagPrivateSubnets', { ec2ResourceTagsRequest: privateTagRequestParams });
   }
 
   public get cluster (): eks.Cluster {
@@ -267,5 +248,8 @@ export class EKS extends Construct {
 
   public get clusterName (): string | undefined {
     return this._clusterName;
+  }
+  public get clusterNameParameterName (): string {
+    return this._clusterNameSsmParamName;
   }
 }
