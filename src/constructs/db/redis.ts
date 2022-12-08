@@ -6,7 +6,7 @@ import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 export interface RedisCacheProps {
   vpc: ec2.IVpc;
   subnets: ec2.ISubnet[];
-  secGroups: string[];
+  securityGroupsList: ec2.ISecurityGroup[];
   instanceType?: string;
   dbIdentifier: string;
   primaryVpcCidrBlock?: string;
@@ -15,7 +15,7 @@ export interface RedisCacheProps {
 export class Redis extends Construct {
   private readonly vpc: ec2.IVpc;
   private readonly id;
-  private readonly secGroups: string[];
+  private readonly securityGroupsList: ec2.ISecurityGroup[];
   private readonly primaryVpcCidrBlock: string | undefined;
   private readonly subnets: ec2.ISubnet[];
   private readonly dbIdentifier: string;
@@ -28,14 +28,14 @@ export class Redis extends Construct {
     const {
       vpc,
       subnets,
-      secGroups,
+      securityGroupsList,
       instanceType,
       dbIdentifier,
       primaryVpcCidrBlock
     } = props;
     this.vpc = vpc;
     this.id = id;
-    this.secGroups = secGroups;
+    this.securityGroupsList = securityGroupsList;
     this.primaryVpcCidrBlock = primaryVpcCidrBlock;
     this.dbIdentifier = dbIdentifier;
     this.instanceType = instanceType;
@@ -49,8 +49,8 @@ export class Redis extends Construct {
         vpc: this.vpc
       });
 
-    this.secGroups.forEach((sg: string, index: number) => {
-      redisSecGroup.addIngressRule(ec2.SecurityGroup.fromSecurityGroupId(this, `redis-cache-sg-${index}`, sg), ec2.Port.tcp(6379));
+    this.securityGroupsList.forEach((sg: ec2.ISecurityGroup, index: number) => {
+      redisSecGroup.addIngressRule(ec2.SecurityGroup.fromSecurityGroupId(this, `redis-cache-sg-${index}`, sg.securityGroupId), ec2.Port.tcp(6379));
     });
     if (this.primaryVpcCidrBlock !== undefined) {
       redisSecGroup.addIngressRule(ec2.Peer.ipv4(this.primaryVpcCidrBlock), ec2.Port.tcp(6379));

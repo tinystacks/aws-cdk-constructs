@@ -6,7 +6,7 @@ import { constructId } from '@tinystacks/iac-utils';
 
 export interface RdsProps {
   vpc: ec2.IVpc;
-  securityGroupsList: ec2.SecurityGroup[];
+  securityGroupsList: ec2.ISecurityGroup[];
   instanceType: ec2.InstanceType;
   subnetType: ec2.SubnetType;
   databaseName?: string;
