@@ -8,7 +8,6 @@ import { isEmpty } from 'lodash';
 
 export interface EcsServiceProps {
   containerName: string;
-  vpc: ec2.IVpc;
   ecsCluster: ecs.Cluster;
   containerImage?: string;
   repositoryImage?: ecs.ContainerImage;
@@ -19,7 +18,7 @@ export interface EcsServiceProps {
   ecsSecurityGroup: ec2.SecurityGroup;
   ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup?: elbv2.ApplicationTargetGroup;
-  ecsTaskEnvVars: { [key: string]: string; };
+  ecsTaskEnvVars: { [key: string]: string | any; };
   command?: string[];
 }
 
