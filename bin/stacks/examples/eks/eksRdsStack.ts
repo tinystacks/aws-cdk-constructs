@@ -1,4 +1,6 @@
 import { constructId } from '@tinystacks/iac-utils';
+import { load } from 'js-yaml';
+import { readFileSync } from 'fs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as cdk from 'aws-cdk-lib';
@@ -62,13 +64,7 @@ export class EksRdsStack extends cdk.Stack {
           eksCluster: eksConstruct.cluster,
           chartName: 'hello-world',
           repository: 'https://helm.github.io/examples',
-          values: {
-            'DB_HOST': rdsConstruct.db.dbInstanceEndpointAddress,
-            'DB_PORT': rdsConstruct.db.dbInstanceEndpointPort,
-            'DB_SECRET_ARN': rdsConstruct.dbSecret?.secretName,
-            'DB_NAME': rdsConstruct.dbName,
-            'DB_USERNAME': rdsConstruct.dbUsername
-          }
+          values: load(readFileSync('./values.yaml', 'utf-8'))
         })
     }
 }

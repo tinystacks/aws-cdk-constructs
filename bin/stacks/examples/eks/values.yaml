@@ -1,0 +1,7 @@
+rbac:
+  create: true
+resourcesToWatch:
+  pod: true
+  daemonset: true
+  services: true
+  deployment: true
