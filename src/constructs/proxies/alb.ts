@@ -16,6 +16,7 @@ export class Alb extends Construct {
   
   readonly _albTargetGroup: elbv2.ApplicationTargetGroup;
   readonly albSecurityGroup: ec2.SecurityGroup;
+  private alb: elbv2.ApplicationLoadBalancer;
   
   constructor (scope: Construct, id: string, props: AlbProps) {
     super (scope, id);
@@ -32,7 +33,7 @@ export class Alb extends Construct {
       }).securityGroup
     } = props;
 
-    const alb = new elbv2.ApplicationLoadBalancer(
+    this.alb = new elbv2.ApplicationLoadBalancer(
       this,
       constructId('alb'),
       {
@@ -42,7 +43,7 @@ export class Alb extends Construct {
       }
     );
 
-    alb.addSecurityGroup(albSecurityGroup);
+    this.alb.addSecurityGroup(albSecurityGroup);
 
     this._albTargetGroup = new elbv2.ApplicationTargetGroup(
       this,
@@ -60,7 +61,7 @@ export class Alb extends Construct {
       protocol: elbv2.Protocol.HTTP
     });
 
-    const albListener = alb.addListener(constructId('alb', 'Listener'), {
+    const albListener = this.alb.addListener(constructId('alb', 'Listener'), {
       open: true,
       port: 80
     });
@@ -70,13 +71,17 @@ export class Alb extends Construct {
     });
 
     new cdk.CfnOutput(this, constructId('alb', 'DnsName'), {
-      value: alb.loadBalancerDnsName
+      value: this.alb.loadBalancerDnsName
     });
   
   }
 
   public get albTargetGroup (): elbv2.ApplicationTargetGroup {
     return this._albTargetGroup;
+  }
+
+  public getAlb (): elbv2.ApplicationLoadBalancer {
+    return this.alb;
   }
 
 }
