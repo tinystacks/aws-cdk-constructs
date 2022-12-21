@@ -17,7 +17,6 @@ export interface EksProps {
   minimumCapacity?: number;
   maximumCapacity?: number;
   instanceType?: InstanceType;
-  clusterName?: string;
 }
 
 export class EKS extends Construct {
@@ -31,8 +30,8 @@ export class EKS extends Construct {
   private readonly _cluster: eks.Cluster;
   private readonly _mastersRole: iam.Role;
   private readonly _serviceAccount: eks.ServiceAccount;
-  private readonly _clusterName: string | undefined;
   private readonly _clusterNameSsmParamName: string;
+  private readonly _clusterName: string;
 
   constructor (scope: Construct, id: string, props: EksProps) {
     super(scope, id);
@@ -43,8 +42,7 @@ export class EKS extends Construct {
       defaultCapacity = 0,
       minimumCapacity,
       maximumCapacity,
-      instanceType = new ec2.InstanceType('t3.micro'),
-      clusterName = `c-${new Date().getTime()}`
+      instanceType = new ec2.InstanceType('t3.micro')
     } = props;
 
     this.id = id;
@@ -54,7 +52,7 @@ export class EKS extends Construct {
     this._minimumCapacity = minimumCapacity;
     this._maximumCapacity = maximumCapacity;
     this._instanceType = instanceType;
-    this._clusterName = clusterName;
+    this._clusterName = `${id}-${new Date().getTime()}`;
     const {
       cluster,
       mastersRole
@@ -65,7 +63,7 @@ export class EKS extends Construct {
     this.configureLoadBalancerController();
     const cleanup = new EksCleanup(this, constructId('EksCleanup'), {
       vpcId: this.vpc.vpcId,
-      clusterName
+      clusterName: this._clusterName 
     });
     this.cluster.node.addDependency(cleanup);
     this.tagSubnets();
@@ -245,7 +243,7 @@ export class EKS extends Construct {
     return this._serviceAccount;
   }
 
-  public get clusterName (): string | undefined {
+  public get clusterName (): string {
     return this._clusterName;
   }
   public get clusterNameParameterName (): string {
