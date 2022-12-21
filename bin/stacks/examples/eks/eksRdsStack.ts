@@ -70,5 +70,7 @@ export class EksRdsStack extends cdk.Stack {
             'DB_USERNAME': rdsConstruct.dbUsername
           }
         })
+
+        
     }
 }
