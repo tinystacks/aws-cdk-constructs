@@ -12,6 +12,7 @@ export interface AlbProps {
   albSecurityGroup?: ec2.ISecurityGroup;
   listenerPort?: number;
   listenerCertificateArns?: string[];
+  healthyHttpCodes?: string;
 }
 
 export class Alb extends Construct {
@@ -59,7 +60,8 @@ export class Alb extends Construct {
 
     this._albTargetGroup.configureHealthCheck({
       path: props.healthCheckPath,
-      protocol: elbv2.Protocol.HTTP
+      protocol: elbv2.Protocol.HTTP,
+      healthyHttpCodes: props.healthyHttpCodes || '200-299'
     });
 
     let certificates = undefined;
