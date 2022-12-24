@@ -57,7 +57,7 @@ export class EcsService extends Construct {
       image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage || ''),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
-      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }), 
+      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName, logRetention: 90 }),
       secrets: props.secrets,
       command: props.command
     });

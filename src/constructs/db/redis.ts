@@ -53,7 +53,7 @@ export class Redis extends Construct {
     this.elasticacheSecret = new secretsmanager.Secret(this, 'elasticache-secret', {
       generateSecretString: {
         includeSpace: false,
-        excludeCharacters: '/"@%*()[]{}~|+?,\'\\_=`;:'
+        excludeCharacters: '"%\'()*+,./:;=?@[\\]_`{|}~#!$&'
       }
     });
 
