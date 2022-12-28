@@ -17,6 +17,7 @@ export interface EksProps {
   minimumCapacity?: number;
   maximumCapacity?: number;
   instanceType?: InstanceType;
+  clusterName?: string;
 }
 
 export class EKS extends Construct {
