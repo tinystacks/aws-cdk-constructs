@@ -17,7 +17,7 @@ export interface EcsServiceProps {
   cpu: number;
   desiredCount: number;
   applicationPort: number;
-  ecsSecurityGroup: ec2.SecurityGroup;
+  ecsSecurityGroup: ec2.SecurityGroup | ec2.ISecurityGroup;
   ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup?: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
