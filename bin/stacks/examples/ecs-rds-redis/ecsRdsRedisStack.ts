@@ -72,7 +72,7 @@ export class EcsRdsRedisStack extends cdk.Stack {
         new EcsService(this, constructId('AJEcsServiceStack'), {
           ecsCluster: ecsClusterConstruct.ecsCluster,
           containerName: "hello-world-app",
-          containerImage: "registry.gitlab.com/architect-io/artifacts/nodejs-hello-world:latest",
+          containerImage: "public.ecr.aws/tinystacks/aws-docker-templates-express:latest-x86",
           memoryLimitMiB: 2048,
           cpu: 1024,
           desiredCount: 1,
