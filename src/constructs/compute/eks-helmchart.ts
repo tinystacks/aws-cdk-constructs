@@ -10,7 +10,7 @@ export interface EksHelmChartProps {
   createNamespace?: boolean;
   release?: string;
   version?: string;
-  values?: { [key: string]: any; }
+  values?: any;
 }
 
 export class EksHelmChart extends Construct {
