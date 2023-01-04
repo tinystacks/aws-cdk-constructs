@@ -17,6 +17,7 @@ export interface RdsProps {
   storageSize?: number;
   dbArn?: string;
   isImported?: boolean,
+  backupRetention?: cdk.Duration
 }
 
 export class Rds extends Construct {
@@ -54,7 +55,8 @@ export class Rds extends Construct {
 
         databaseName: this._databaseName,
         port: databasePort,
-        securityGroups: props.securityGroupsList
+        securityGroups: props.securityGroupsList, 
+        backupRetention: props.backupRetention
       });
 
       new cdk.CfnOutput(this, 'db-secret', {

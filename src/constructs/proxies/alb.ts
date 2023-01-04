@@ -10,6 +10,9 @@ export interface AlbProps {
   applicationPort: number;
   healthCheckPath: string;
   albSecurityGroup?: ec2.ISecurityGroup;
+  listenerPort?: number;
+  listenerCertificateArns?: string[];
+  healthyHttpCodes?: string;
 }
 
 export class Alb extends Construct {
@@ -22,7 +25,7 @@ export class Alb extends Construct {
     super (scope, id);
 
     const albSecurityGroupRules = [
-      { name: 'Internet to ALB', port: ec2.Port.tcp(80), peer: ec2.Peer.anyIpv4() }
+      { name: 'Internet to ALB', port: ec2.Port.tcp(props.listenerPort || 80), peer: ec2.Peer.anyIpv4() }
     ];
 
     const {
@@ -39,11 +42,10 @@ export class Alb extends Construct {
       {
         vpc: props.vpc,
         vpcSubnets: { subnets: props.vpc.publicSubnets },
-        internetFacing: true
+        internetFacing: true,
+        securityGroup: albSecurityGroup
       }
     );
-
-    this.alb.addSecurityGroup(albSecurityGroup);
 
     this._albTargetGroup = new elbv2.ApplicationTargetGroup(
       this,
@@ -58,12 +60,19 @@ export class Alb extends Construct {
 
     this._albTargetGroup.configureHealthCheck({
       path: props.healthCheckPath,
-      protocol: elbv2.Protocol.HTTP
+      protocol: elbv2.Protocol.HTTP,
+      healthyHttpCodes: props.healthyHttpCodes || '200-299'
     });
+
+    let certificates = undefined;
+    if (props.listenerCertificateArns && props.listenerCertificateArns.length > 0) {
+      certificates = props.listenerCertificateArns.map((certificateArn: string) => ({ certificateArn }));
+    }
 
     const albListener = this.alb.addListener(constructId('alb', 'Listener'), {
       open: true,
-      port: 80
+      port: props.listenerPort || 80,
+      certificates
     });
 
     albListener.addTargetGroups(constructId('alb', 'Listener', 'TargetGroup'), {

@@ -4,6 +4,7 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
+import { Secret } from 'aws-cdk-lib/aws-ecs';
 import { isEmpty } from 'lodash';
 
 export interface EcsServiceProps {
@@ -20,6 +21,7 @@ export interface EcsServiceProps {
   ecsIamPolicyStatements: iam.PolicyStatement[];
   albTargetGroup?: elbv2.ApplicationTargetGroup;
   ecsTaskEnvVars: { [key: string]: string; };
+  secrets?: { [key: string]: Secret; }
   command?: string[];
 }
 
@@ -43,7 +45,6 @@ export class EcsService extends Construct {
     
 
     const ecsTaskDefinition = new ecs.TaskDefinition(this, constructId('ecs', 'TaskDefinition'), {
-      family: 'task',
       compatibility: ecs.Compatibility.EC2_AND_FARGATE,
       cpu: String(props.cpu),
       memoryMiB: String(props.memoryLimitMiB),
@@ -56,7 +57,8 @@ export class EcsService extends Construct {
       image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage || ''),
       memoryLimitMiB: props.memoryLimitMiB,
       environment: props.ecsTaskEnvVars,
-      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName }),
+      logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName, logRetention: 90 }),
+      secrets: props.secrets,
       command: props.command
     });
 
