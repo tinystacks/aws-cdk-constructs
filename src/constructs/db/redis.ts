@@ -16,7 +16,6 @@ export class Redis extends Construct {
   private readonly vpc: ec2.IVpc;
   private readonly id;
   private readonly securityGroupsList: ec2.ISecurityGroup[];
-  private readonly primaryVpcCidrBlock: string | undefined;
   private readonly subnets: ec2.ISubnet[];
   private readonly dbIdentifier: string;
   private readonly instanceType: string | undefined;
@@ -30,13 +29,11 @@ export class Redis extends Construct {
       subnets,
       securityGroupsList,
       instanceType,
-      dbIdentifier,
-      primaryVpcCidrBlock
+      dbIdentifier
     } = props;
     this.vpc = vpc;
     this.id = id;
     this.securityGroupsList = securityGroupsList;
-    this.primaryVpcCidrBlock = primaryVpcCidrBlock;
     this.dbIdentifier = dbIdentifier;
     this.instanceType = instanceType;
     this.subnets = subnets;
@@ -44,18 +41,6 @@ export class Redis extends Construct {
   }
 
   public initRedisCache (): void {
-    const redisSecGroup = new ec2.SecurityGroup(
-      this, this.id + 'redis-sg', {
-        vpc: this.vpc
-      });
-
-    this.securityGroupsList.forEach((sg: ec2.ISecurityGroup, index: number) => {
-      redisSecGroup.addIngressRule(ec2.SecurityGroup.fromSecurityGroupId(this, `redis-cache-sg-${index}`, sg.securityGroupId), ec2.Port.tcp(6379));
-    });
-    if (this.primaryVpcCidrBlock !== undefined) {
-      redisSecGroup.addIngressRule(ec2.Peer.ipv4(this.primaryVpcCidrBlock), ec2.Port.tcp(6379));
-    }
-
     const cfnSubnetGroup = new elasticache.CfnSubnetGroup(
       this,
       'redis-subnet-group',
@@ -68,7 +53,7 @@ export class Redis extends Construct {
     this.elasticacheSecret = new secretsmanager.Secret(this, 'elasticache-secret', {
       generateSecretString: {
         includeSpace: false,
-        excludeCharacters: '/"@%*()[]{}~|+?,\'\\_=`;:'
+        excludeCharacters: '"%\'()*+,./:;=?@[\\]_`{|}~#!$&'
       }
     });
 
@@ -90,7 +75,7 @@ export class Redis extends Construct {
         port: 6379,
         autoMinorVersionUpgrade: true,
         cacheSubnetGroupName: cfnSubnetGroup.ref,
-        securityGroupIds: [redisSecGroup.securityGroupId]
+        securityGroupIds: this.securityGroupsList.map(sg => sg.securityGroupId)
       }
     );
   }
