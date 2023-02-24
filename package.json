@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@tinystacks/iac-utils": "^0.0.5",
-    "aws-cdk-lib": "^2.37.1",
+    "aws-cdk-lib": "^2.63.0",
     "constructs": "^10.1.73",
     "lodash": "^4.17.21",
     "lodash.kebabcase": "^4.1.1",
