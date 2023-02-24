@@ -60,7 +60,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
-    "@tinystacks/iac-utils": "^0.0.5",
+    "@tinystacks/iac-utils": "^0.0.14",
     "aws-cdk-lib": "^2.37.1",
     "constructs": "^10.1.73",
     "lodash": "^4.17.21",
