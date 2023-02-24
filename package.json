@@ -62,7 +62,7 @@
   "dependencies": {
     "@tinystacks/iac-utils": "^0.0.5",
     "aws-cdk-lib": "^2.37.1",
-    "constructs": "^10.1.73",
+    "constructs": "^10.1.239",
     "lodash": "^4.17.21",
     "lodash.kebabcase": "^4.1.1",
     "prando": "^6.0.1",
