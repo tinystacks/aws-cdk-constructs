@@ -6,3 +6,4 @@ node_modules
 bin
 jest.config.js
 test
+local-plugin.js

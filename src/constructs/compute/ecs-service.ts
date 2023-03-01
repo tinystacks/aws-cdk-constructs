@@ -5,7 +5,7 @@ import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import { Construct } from 'constructs';
 import { constructId } from '@tinystacks/iac-utils';
 import { Secret } from 'aws-cdk-lib/aws-ecs';
-import { isEmpty } from 'lodash';
+import isEmpty from 'lodash.isempty';
 
 export interface EcsServiceProps {
   containerName: string;
@@ -15,6 +15,12 @@ export interface EcsServiceProps {
   repositoryImage?: ecs.ContainerImage;
   memoryLimitMiB: number;
   cpu: number;
+  /**
+   * Sets the memoryLimitMiB on the initial container.
+   * Only use this property if you are sure that you need to reserve a specific amount of memory for the container.
+   * Otherwise it is best to let it dynamically claim whatever it needs from the Task's allocated memory.
+   */
+  containerMemoryLimitMiB?: number;
   desiredCount: number;
   applicationPort: number;
   ecsSecurityGroup: ec2.SecurityGroup;
@@ -44,18 +50,16 @@ export class EcsService extends Construct {
     }
     
 
-    const ecsTaskDefinition = new ecs.TaskDefinition(this, constructId('ecs', 'TaskDefinition'), {
-      compatibility: ecs.Compatibility.EC2_AND_FARGATE,
-      cpu: String(props.cpu),
-      memoryMiB: String(props.memoryLimitMiB),
-      networkMode: ecs.NetworkMode.AWS_VPC,
+    const ecsTaskDefinition = new ecs.FargateTaskDefinition(this, constructId('ecs', 'TaskDefinition'), {
+      cpu: props.cpu,
+      memoryLimitMiB: props.memoryLimitMiB,      
       taskRole: ecsTaskRole
     });
 
     const ecsContainer = ecsTaskDefinition.addContainer(constructId('ecs', 'Container'), {
       containerName: props.containerName,
       image: props.repositoryImage || ecs.RepositoryImage.fromRegistry(props.containerImage || ''),
-      memoryLimitMiB: props.memoryLimitMiB,
+      memoryLimitMiB: props.containerMemoryLimitMiB,
       environment: props.ecsTaskEnvVars,
       logging: ecs.LogDriver.awsLogs({ streamPrefix: props.containerName, logRetention: 90 }),
       secrets: props.secrets,
