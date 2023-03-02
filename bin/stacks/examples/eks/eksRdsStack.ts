@@ -51,7 +51,6 @@ export class EksRdsStack extends cdk.Stack {
         // Launch EKS cluster
 
         const eksConstruct = new EKS(this, 'AJEksStack', {
-          clusterName: 'AJEksCluster',
           vpc: vpcConstruct.vpc,
           internetAccess: true
         });
@@ -70,5 +69,7 @@ export class EksRdsStack extends cdk.Stack {
             'DB_USERNAME': rdsConstruct.dbUsername
           }
         })
+
+        
     }
 }

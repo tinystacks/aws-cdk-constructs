@@ -7,7 +7,7 @@ import { VpcPeerDnsResolution } from './vpc-peer-dns-resolution';
 import { VpcPeeringRequestAccepter } from './vpc-peering-request-accepter';
 import { VpcPeeringRoutes } from './vpc-peering-routes';
 
-interface ExternalVpcPeer {
+export interface ExternalVpcPeer {
   vpcId: string
   cidrBlock: string
   accountId?: string

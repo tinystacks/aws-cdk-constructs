@@ -1,6 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import { VPC } from '../../src/constructs/networking/vpc'
+import { VPC } from '../../../src/constructs/networking/vpc'
 
 interface CreateVpcProps extends cdk.StackProps {
   internetAccess: boolean
