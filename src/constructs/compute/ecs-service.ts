@@ -29,6 +29,7 @@ export interface EcsServiceProps {
   ecsTaskEnvVars: { [key: string]: string; };
   secrets?: { [key: string]: Secret; }
   command?: string[];
+  assignPublicIp?: boolean;
 }
 
 export class EcsService extends Construct {
@@ -68,12 +69,13 @@ export class EcsService extends Construct {
 
     ecsContainer.addPortMappings({ containerPort: props.applicationPort });
 
+    const { assignPublicIp = false } = props;
     this.ecsService = new ecs.FargateService(this, constructId('ecs', 'FargfateService'), {
       cluster: props.ecsCluster,
       desiredCount: props.desiredCount,
       taskDefinition: ecsTaskDefinition,
       securityGroups: [props.ecsSecurityGroup],
-      assignPublicIp: true,
+      assignPublicIp,
       enableExecuteCommand: true
     });
 
